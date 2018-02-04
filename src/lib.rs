@@ -1,21 +1,24 @@
 #[macro_use] extern crate nom;
 use nom::*;
 
-named!(valid_variable_name(&[u8]) -> String, 
-       map!(take_while!(is_alpha), buf_to_string));
+named!(valid_variable_name, take_while1!(is_valid_char));
 
-named!(pub tag_name(&[u8]) -> String, call!(valid_variable_name));
-named!(pub take_string(&[u8]) -> String, 
-       map!(delimited!(tag!("\""), is_not!("\""), tag!("\"")), buf_to_string));
+named!(tag_name, call!(valid_variable_name));
+named!(take_string<String>, map!(delimited!(
+        tag!("\""), 
+        escaped_transform!(is_not!("\"\\"), '\\', tag!("\"")), 
+        tag!("\"")),
+        |bytes| { String::from_utf8(bytes).unwrap() }
+    ));
 
-named!(pub take_attribute(&[u8]) -> (String, String), do_parse!(
+named!(pub take_attribute(&[u8]) -> (&[u8], String), do_parse!(
         name: valid_variable_name >>
         tag!("=") >>
         val: take_string >>
         (name, val)
     ));
 
-named!(take_attributes(&[u8]) -> Vec<(String, String)>,
+named!(take_attributes(&[u8]) -> Vec<(&[u8], String)>,
         many0!(
             do_parse!(
                 consume_space >> 
@@ -23,15 +26,22 @@ named!(take_attributes(&[u8]) -> Vec<(String, String)>,
                 )
             ));
 
+named!(take_delimited_children<Vec<Box<DOMTree>>>, do_parse! (
+        tag!("{") >>
+        consume_space >>
+        children: many0!(map!(parse_DOM_tree, Box::new)) >>
+        consume_space >>
+        tag!("}") >>
+        (children)
+    ));
+
 named!(take_DOM_node(&[u8]) -> DOMNode, do_parse!(
         name: valid_variable_name >>
         attrs: take_attributes >>
         consume_space >> 
-        tag!("{") >>
-        consume_space >>
-        children: many0!(parse_DOM_tree) >>
-        consume_space >>
-        tag!("}") >>
+        children: alt!(
+            take_delimited_children |
+            parse_DOM_tree => { |n| vec![Box::new(n)] }) >>
         consume_space >>
         (DOMNode{name: name, attrs: attrs,  children: children})
     ));
@@ -44,20 +54,11 @@ named!(take_DOM_node_sc(&[u8]) -> DOMNodeSC, do_parse!(
         (DOMNodeSC{ name: name, attrs: attrs })
     ));
 
-named!(take_DOM_node_single_child(&[u8]) -> DOMNode, do_parse!(
-        name: valid_variable_name >>
-        attrs: take_attributes >>
-        consume_space >> 
-        child: parse_DOM_tree >>
-        (DOMNode{name: name, attrs: attrs,  children: vec![child]})
-    ));
-
 named!(take_expression(&[u8]) -> Expression, map!(take_string, Expression::Text));
 named!(pub parse_DOM_tree(&[u8]) -> DOMTree, alt!(
-            call!(take_DOM_node) => { |n| DOMTree::Node(n) } |
-            call!(take_DOM_node_single_child) => { |n| DOMTree::Node(n) } |
-            call!(take_DOM_node_sc) => { |n| DOMTree::SelfClosingNode(n) } |
-            call!(take_expression) => { |expr| DOMTree::Content(expr) }
+            call!(take_expression) => { |expr| DOMTree::Content(expr) } |
+            call!(take_DOM_node) => { |n| DOMTree::Node(Box::new(n)) } |
+            call!(take_DOM_node_sc) => { |n| DOMTree::SelfClosingNode(Box::new(n)) }
         )
     );
 
@@ -81,13 +82,13 @@ impl Expression {
 }
 
 #[derive(Debug)]
-pub enum DOMTree {
-    Node(DOMNode),
-    SelfClosingNode(DOMNodeSC),
+pub enum DOMTree<'a> {
+    Node(Box<DOMNode<'a>>),
+    SelfClosingNode(Box<DOMNodeSC<'a>>),
     Content(Expression),
 }
 
-impl DOMTree {
+impl<'a> DOMTree<'a> {
     pub fn to_html(&self) -> String {
         match self {
             &DOMTree::Node(ref n) => n.to_html(),
@@ -98,36 +99,36 @@ impl DOMTree {
 }
 
 #[derive(Debug)]
-pub struct DOMNodeSC {
-    pub name: String,
-    pub attrs: Vec<(String, String)>,
+pub struct DOMNodeSC<'a> {
+    pub name: &'a [u8],
+    pub attrs: Vec<(&'a [u8], String)>,
 }
-impl DOMNodeSC {
+impl<'a> DOMNodeSC<'a> {
     pub fn to_html(&self) -> String {
         let attrs = self.attrs.iter()
             .map(|&(ref attr, ref val)|{ 
-                format!(" {}=\"{}\"", attr, val)
+                format!(" {}=\"{}\"", buf_to_string(attr), val)
             })
             .fold("".to_string(), |attr, acc| {
                 format!("{}{}", attr, acc)
             });
 
-        format!("<{}{}/>", self.name, attrs)
+        format!("<{}{}/>", buf_to_string(self.name), attrs)
     }
 }
 
 #[derive(Debug)]
-pub struct DOMNode {
-    pub name: String,
-    pub attrs: Vec<(String, String)>,
-    pub children: Vec<DOMTree>,
+pub struct DOMNode<'a> {
+    pub name: &'a [u8],
+    pub attrs: Vec<(&'a [u8], String)>,
+    pub children: Vec<Box<DOMTree<'a>>>,
 }
 
-impl DOMNode {
+impl<'a> DOMNode<'a> {
     pub fn to_html(&self) -> String {
         let attrs = self.attrs.iter()
             .map(|&(ref attr, ref val)|{ 
-                format!(" {}=\"{}\"", attr, val)
+                format!(" {}=\"{}\"", buf_to_string(attr), val)
             })
             .fold("".to_string(), |attr, acc| {
                 format!("{}{}", attr, acc)
@@ -136,20 +137,24 @@ impl DOMNode {
         let children = self.children.iter()
             .map(|child_node| {child_node.to_html()})
             .fold("".to_string(), |child_html, acc| {
-                format!("{}\n{}", child_html, acc)
+                format!("{}{}", child_html, acc)
             });
 
-        format!("<{}{}>\n{}\n</{}>", 
-                self.name, 
+        format!("<{}{}>{}</{}>", 
+                buf_to_string(self.name), 
                 attrs, 
                 children, 
-                self.name)
+                buf_to_string(self.name))
     }
 }
 
-pub fn is_alpha(ascii: u8) -> bool {
-    (65 <= ascii && ascii <= 90) ||
-    (97 <= ascii && ascii <= 122)
+fn is_valid_char(ascii: u8) -> bool {
+    (65 <= ascii && ascii <= 90) || //capital letters
+    (97 <= ascii && ascii <= 122) || // letters
+    (48 <= ascii && ascii <= 57) || // numbers
+    ascii == 45 || // hyphen
+    ascii == 95 // under line
+
 }
 
 pub fn is_whitespace(ascii: u8) -> bool {

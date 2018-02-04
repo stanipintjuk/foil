@@ -13,31 +13,8 @@ fn main() {
     println!("input: {:?}", input);
     println!("result: {:?}", result);*/
 
-    let input = b"tag=\"val\"";
-    let result = foil::tag_name(input);
+    let input = b" }";
+    let result = foil::valid_variable_name(input);
     println!("result: {:?}", result);
 
-    let input = b"\"val\"";
-    let result = foil::take_string(input);
-    println!("result: {:?}", result);
-
-    let input = b"tag=\"val\"";
-    let result = foil::take_attribute(input);
-    println!("result: {:?}", result);
-
-    let input = b"html {   \n\t\t  head {} body attr=\"hej\" attrTwo=\"hejdo\" {}";
-    let result = foil::take_DOM_node(input);
-
-    match result {
-        IResult::Done(_, node) => {
-            println!("{}", node.to_html());
-        },
-        IResult::Error(err) => {
-            println!("Error: {}", err);
-        },
-        IResult::Incomplete(needed) => {
-            println!("Incomplete. Need {:?}", needed)
-        }
-    };
-    
 }

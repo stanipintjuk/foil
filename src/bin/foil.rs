@@ -10,9 +10,7 @@ fn main() {
     let mut handle = stdin.lock();
     handle.read_to_string(&mut buffer);
 
-    println!("parsing now");
     let result = parse_DOM_tree(buffer.as_bytes());
-    println!("printing now");
     match result {
         IResult::Done(_, node) => {
             println!("{}", node.to_html());
