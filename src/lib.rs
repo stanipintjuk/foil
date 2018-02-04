@@ -3,18 +3,25 @@ use nom::*;
 
 named!(valid_variable_name, take_while1!(is_valid_char));
 
-named!(tag_name, call!(valid_variable_name));
-named!(take_string<String>, map!(delimited!(
+named!(pub take_string<String>, map!(delimited!(
         tag!("\""), 
         escaped_transform!(is_not!("\"\\"), '\\', tag!("\"")), 
         tag!("\"")),
         |bytes| { String::from_utf8(bytes).unwrap() }
     ));
 
+named!(pub take_attribute_name, add_return_error!(
+        ErrorKind::Custom(ERROR_INVALID_ATTRIBUTE_NAME),
+        call!(valid_variable_name)));
+
+named!(pub take_attribute_value<String>, add_return_error!(
+        ErrorKind::Custom(ERROR_ATTRIBUTE_VALUE_NOT_STRING),
+        call!(take_string)));
+
 named!(pub take_attribute(&[u8]) -> (&[u8], String), do_parse!(
-        name: valid_variable_name >>
+        name: take_attribute_name >>
         tag!("=") >>
-        val: take_string >>
+        val: take_attribute_value >>
         (name, val)
     ));
 
@@ -26,43 +33,71 @@ named!(take_attributes(&[u8]) -> Vec<(&[u8], String)>,
                 )
             ));
 
-named!(take_delimited_children<Vec<Box<DOMTree>>>, do_parse! (
+named!(pub take_delimited_children<Vec<Box<DOMTree>>>, add_return_error!(
+        ErrorKind::Custom(ERROR_EXPECTING_DELIMITERS),
+        do_parse! (
         tag!("{") >>
         consume_space >>
         children: many0!(map!(parse_DOM_tree, Box::new)) >>
         consume_space >>
         tag!("}") >>
         (children)
-    ));
+    )));
 
-named!(take_DOM_node(&[u8]) -> DOMNode, do_parse!(
-        name: valid_variable_name >>
-        attrs: take_attributes >>
-        consume_space >> 
-        children: alt!(
-            take_delimited_children |
-            parse_DOM_tree => { |n| vec![Box::new(n)] }) >>
+named!(take_tag_name, add_return_error!(
+        ErrorKind::Custom(ERROR_INVALID_TAG_NAME),
+        call!(valid_variable_name)));
+
+named!(take_DOM_node(&[u8]) -> DOMNode, add_return_error!(
+        ErrorKind::Custom(ERROR_INVALID_DOM_NODE),
+        do_parse!(
+            name: take_tag_name >>
+            attrs: take_attributes >>
+            consume_space >> 
+            children: alt!(
+                take_delimited_children |
+                parse_DOM_tree => { |n| vec![Box::new(n)] }) >>
+            consume_space >>
+            (DOMNode{name: name, attrs: attrs,  children: children})
+    )));
+
+named!(take_DOM_node_sc(&[u8]) -> DOMNodeSC, add_return_error!(
+        ErrorKind::Custom(ERROR_INVALID_SELF_CLOSING_DOM_NODE),
+        do_parse!(
+            name: take_tag_name >>
+            attrs: take_attributes >>
+            consume_space >> 
+            tag!(";") >>
+            (DOMNodeSC{ name: name, attrs: attrs })
+    )));
+
+named!(take_expression(&[u8]) -> Expression, 
+       add_return_error!(
+           ErrorKind::Custom(ERROR_INVALID_EXPRESSION),
+           map!(take_string, Expression::Text)));
+
+named!(pub parse_DOM_tree(&[u8]) -> DOMTree, do_parse!(
         consume_space >>
-        (DOMNode{name: name, attrs: attrs,  children: children})
-    ));
-
-named!(take_DOM_node_sc(&[u8]) -> DOMNodeSC, do_parse!(
-        name: valid_variable_name >>
-        attrs: take_attributes >>
-        consume_space >> 
-        tag!(";") >>
-        (DOMNodeSC{ name: name, attrs: attrs })
-    ));
-
-named!(take_expression(&[u8]) -> Expression, map!(take_string, Expression::Text));
-named!(pub parse_DOM_tree(&[u8]) -> DOMTree, alt!(
+        res: alt!(
             call!(take_expression) => { |expr| DOMTree::Content(expr) } |
             call!(take_DOM_node) => { |n| DOMTree::Node(Box::new(n)) } |
             call!(take_DOM_node_sc) => { |n| DOMTree::SelfClosingNode(Box::new(n)) }
+            ) >>
+        consume_space >>
+        (res)
         )
-    );
+      );
 
 named!(consume_space, take_while!(is_whitespace));
+
+pub const ERROR_INVALID_TAG_NAME: u32 = 1;
+pub const ERROR_INVALID_ATTRIBUTE_NAME: u32 = 2;
+pub const ERROR_ATTRIBUTE_VALUE_NOT_STRING: u32 = 3;
+pub const ERROR_EXPECTED_WHITESPACE: u32 = 4;
+pub const ERROR_INVALID_EXPRESSION: u32 = 5;
+pub const ERROR_INVALID_DOM_NODE: u32 = 6;
+pub const ERROR_INVALID_SELF_CLOSING_DOM_NODE: u32 = 7;
+pub const ERROR_EXPECTING_DELIMITERS: u32 = 8;
 
 fn buf_to_string(buf: &[u8]) -> String {
     std::str::from_utf8(buf).unwrap().to_string() 
