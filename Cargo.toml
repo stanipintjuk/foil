@@ -1,0 +1,7 @@
+[package]
+name = "foil"
+version = "0.1.0"
+authors = ["Stani <stanislav.pintjuk@gmail.com>"]
+
+[dependencies.nom]
+version = "3.*.*"
