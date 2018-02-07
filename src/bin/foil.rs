@@ -2,14 +2,15 @@ extern crate foil;
 extern crate nom;
 use nom::{IResult, ErrorKind};
 use std::io::{self, Read};
-use foil::parse_DOM_tree;
+use foil::parsers::dom::parse_DOM_tree;
+use foil::constants::errors::*;
 use std::error::Error;
 
 fn main() {
     let mut buffer = String::new();
     let stdin = io::stdin();
     let mut handle = stdin.lock();
-    handle.read_to_string(&mut buffer);
+    let _ = handle.read_to_string(&mut buffer);
 
     let result = parse_DOM_tree(buffer.as_bytes());
     match result {
@@ -52,7 +53,7 @@ fn print_custom_errs(err_code: u32, err: &Error) {
 
     if let Some(cause) = err.cause() {
         println!("Caused by:");
-        print_recursive_errors(err);
+        print_recursive_errors(cause);
     }
 }
 
