@@ -5,3 +5,4 @@ authors = ["Stani <stanislav.pintjuk@gmail.com>"]
 
 [dependencies.nom]
 version = "3.*.*"
+features = [ "verbose-errors" ]

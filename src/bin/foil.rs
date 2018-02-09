@@ -1,9 +1,9 @@
 extern crate foil;
 extern crate nom;
-use nom::{IResult, ErrorKind};
+use nom::{IResult, ErrorKind, Err};
 use std::io::{self, Read};
-use foil::parsers::dom::parse_DOM_tree;
-use foil::constants::errors::*;
+use foil::parsers::foil_parser;
+use foil::parsers::errors::*;
 use std::error::Error;
 
 fn main() {
@@ -12,18 +12,38 @@ fn main() {
     let mut handle = stdin.lock();
     let _ = handle.read_to_string(&mut buffer);
 
-    let result = parse_DOM_tree(buffer.as_bytes());
+    let result = foil_parser(buffer.as_bytes());
     match result {
-        IResult::Done(_, node) => {
-            println!("{}", node.to_html());
+        Ok(dom_tree) => {
+            println!("{}", dom_tree.to_html());
         },
-        IResult::Error(err) => {
-            print_error(&err);
-        },
-        IResult::Incomplete(needed) => {
-            println!("Incomplete. Need {:?}", needed)
+        Err(err) => {
+            println!("Error: {:?}", err);
         }
     };
+}
+/*
+fn print_err(err: Err<u32>) {
+    match err {
+        Err::Code(err) => print_error(err),
+        Err::Node(err, vec) => {
+            print_error(err);
+            for err in vec {
+                print_err(err);
+            }
+        }
+        Err::Position(err, pos) => {
+            print_err(err);
+            println!("position: {}", pos);
+        }
+        Err::NodePosition(err, pos, vec) {
+            print_err(err);
+            for err in vec {
+                print_err(err);
+            }
+            println!("position: {}", pos);
+        }
+    }
 }
 
 fn print_error(err: &ErrorKind) {
@@ -64,3 +84,4 @@ fn print_recursive_errors(err: &Error) {
         print_recursive_errors(errchild);
     }
 }
+*/

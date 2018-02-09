@@ -27,6 +27,12 @@ mod tests {
     use nom::*;
 
     #[test]
+    fn take_path_gives_error() {
+        let expected_error = Err::Position(ErrorKind::Tag, &b"path>"[..]);
+        assert_eq!(IResult::Error(expected_error), take_path(b"path>"));
+    }
+
+    #[test]
     fn take_path_works() {
 
         //Should work with regular 'ol paths
