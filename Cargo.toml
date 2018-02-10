@@ -8,4 +8,3 @@ peg-syntax-ext = "0.5.0"
 
 [dependencies.peg]
 version = "*"
-features = [ "trace" ]
