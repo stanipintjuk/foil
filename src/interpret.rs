@@ -25,7 +25,7 @@ fn closed_node_into_html<'a>(node: &ClosedNode<'a>) -> String {
             )
 }
 
-fn content_node_into_html<'a>(node: &Content<'a>) -> String {
+fn content_node_into_html<'a>(node: &Content) -> String {
     match node {
         &Content::Literal(ref s) => s.to_string()
     }
@@ -33,7 +33,7 @@ fn content_node_into_html<'a>(node: &Content<'a>) -> String {
 
 fn attributes_to_string<'a>(attribs: &Vec<Attribute<'a>>) -> String {
     attribs.iter()
-        .map(|&(n, v)| format!("{}=\"{}\"", n, v))
+        .map(|&(n, ref v)| format!("{}=\"{}\"", n, v))
         .fold(String::new(), |acc, attrib|{ format!("{} {}", acc, attrib)})
 }
 

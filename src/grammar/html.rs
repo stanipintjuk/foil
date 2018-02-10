@@ -29,7 +29,7 @@ children -> Vec<NodeKind<'input>>
     = "{" whitespace? c:node* whitespace? "}" { c }
     / c:node_kind { vec![c] }
 
-content -> Content<'input>
+content -> Content
     = s:string {Content::Literal(s)}
 
 tag_name -> &'input str
@@ -41,22 +41,30 @@ attributes -> Vec<Attribute<'input>>
 attribute -> Attribute<'input>
     = whitespace n:tag_name "=" v:string { (n, v) }
 
-string -> &'input str
-    = "\"" s:$([^\"]*) "\"" { s }
+string -> String
+    = "\"" s:$(("\\\\"/"\\\""/[^\"])*) "\"" { strip_escape_chars(s, "\\", "\"") }
 
 whitespace = #quiet<[ \n\t]+>
 
 "#);
 
+fn strip_escape_chars(s: &str, escape_char: &str, delimiter: &str) -> String {
+    let escaped_escape_char = format!("{}{}", escape_char, escape_char);
+    let escaped_delimiter = format!("{}{}", escape_char, delimiter);
+
+    s.replace(&escaped_escape_char, &escape_char)
+        .replace(&escaped_delimiter, &delimiter)
+}
+
 /// A tuple that describes an attribute's name and value
-pub type Attribute<'a> = (&'a str,  &'a str);
+pub type Attribute<'a> = (&'a str,  String);
 
 /// A node the DOM tree
 #[derive(Debug)]
 pub enum NodeKind<'a> {
     OpenNode(OpenNode<'a>),
     ClosedNode(ClosedNode<'a>),
-    Content(Content<'a>),
+    Content(Content),
 }
 impl<'a> PartialEq for NodeKind<'a> {
     fn eq(&self, other: &NodeKind) -> bool {
@@ -70,10 +78,10 @@ impl<'a> PartialEq for NodeKind<'a> {
 }
 
 #[derive(Debug)]
-pub enum Content<'a> {
-    Literal(&'a str),
+pub enum Content {
+    Literal(String),
 }
-impl<'a> PartialEq for Content<'a> {
+impl PartialEq for Content {
     fn eq(&self, other: &Content) -> bool {
         match (self, other) {
             (&Content::Literal(ref s1), &Content::Literal(ref s2)) => s1 == s2,
@@ -130,7 +138,7 @@ mod tests {
         let expected = NodeKind::OpenNode(
             OpenNode{
                 name: "div", 
-                attributes: vec![("class", "row col12")], 
+                attributes: vec![("class", "row col12".to_string())], 
                 children: vec![]
             });
         assert_eq!(Ok(expected), node("div class=\"row col12\" {}"));
@@ -141,7 +149,7 @@ mod tests {
         let expected = NodeKind::ClosedNode(
             ClosedNode{
                 name: "div", 
-                attributes: vec![("class", "row col12")],
+                attributes: vec![("class", "row col12".to_string())],
             });
         assert_eq!(Ok(expected), node("div class=\"row col12\";"));
     }
@@ -151,7 +159,9 @@ mod tests {
         let expected = NodeKind::OpenNode(
             OpenNode{
                 name: "div", 
-                attributes: vec![("id", "div1"), ("class", "row col12")], 
+                attributes: vec![
+                    ("id", "div1".to_string()), 
+                    ("class", "row col12".to_string())], 
                 children: vec![]
             });
         assert_eq!(Ok(expected), node("div id=\"div1\" class=\"row col12\" {}"));
@@ -162,14 +172,16 @@ mod tests {
         let expected = NodeKind::ClosedNode(
             ClosedNode{
                 name: "div", 
-                attributes: vec![("id", "div2"), ("class", "row col12")],
+                attributes: vec![
+                    ("id", "div2".to_string()), 
+                    ("class", "row col12".to_string())],
             });
         assert_eq!(Ok(expected), node("div id=\"div2\" class=\"row col12\";"));
     }
 
     #[test]
     fn open_node_single_child_works() {
-        let child = NodeKind::Content(Content::Literal("test"));
+        let child = NodeKind::Content(Content::Literal("test".to_string()));
         let expected = NodeKind::OpenNode(
             OpenNode{
                 name: "h1", 
@@ -183,12 +195,14 @@ mod tests {
     fn open_node_multiple_children_works() {
         let li1 = NodeKind::OpenNode(OpenNode{
             name: "li", attributes: vec![], 
-            children: vec![NodeKind::Content(Content::Literal("list item 1"))],
+            children: vec![NodeKind::Content(
+                Content::Literal("list item 1".to_string()))],
         });
 
         let li2 = NodeKind::OpenNode(OpenNode{
             name: "li", attributes: vec![], 
-            children: vec![NodeKind::Content(Content::Literal("list item 2"))],
+            children: vec![NodeKind::Content(
+                Content::Literal("list item 2".to_string()))],
         });
 
         let expected = NodeKind::OpenNode(
@@ -208,6 +222,8 @@ mod tests {
 
     #[test]
     fn returns_correct_error_on_nonsence() {
+        use std::collections::HashSet;
+
         let mut expected_symbols = HashSet::new();
         expected_symbols.insert(";");
         expected_symbols.insert("[a-zA-Z0-9]");
@@ -221,5 +237,12 @@ mod tests {
             expected: expected_symbols};
 
         assert_eq!(Err(expected), node("div class=\"row col12\" \n{ some nonsence }"));
+    }
+
+    #[test]
+    fn strings_work_with_escaped_chars() {
+        let expected = NodeKind::Content(
+            Content::Literal("\"\\testing".to_string()));
+        assert_eq!(Ok(expected), node("\"\\\"\\\\testing\""));
     }
 }
