@@ -1,2 +1,5 @@
-#[macro_use] extern crate nom;
-pub mod parsers;
+#![feature(plugin)]
+#![plugin(peg_syntax_ext)]
+
+pub mod grammar;
+pub mod interpret;
