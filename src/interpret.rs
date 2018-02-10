@@ -1,4 +1,5 @@
 use grammar::html::{NodeKind, OpenNode, ClosedNode, Content, Attribute};
+use htmlescape::encode_minimal;
 
 /// Takes an NodeKind and returns the entire html it represents.
 pub fn into_html<'a>(node: &NodeKind<'a>) -> String {
@@ -27,7 +28,7 @@ fn closed_node_into_html<'a>(node: &ClosedNode<'a>) -> String {
 
 fn content_node_into_html<'a>(node: &Content) -> String {
     match node {
-        &Content::Literal(ref s) => s.to_string(),
+        &Content::Literal(ref s) => encode_minimal(s),
         &Content::Path(ref p, _) => p.to_string(),
     }
 }
@@ -75,6 +76,13 @@ mod tests {
     fn children_work() {
         let dom_node = node("ul { li \"first row\" li \"second row\" }").unwrap();
         let expected = "<ul><li>first row</li><li>second row</li></ul>";
+        assert_eq!(expected, into_html(&dom_node));
+    }
+
+    #[test]
+    fn strings_are_html_escaped() {
+        let dom_node = node("\"<not&html>\"").unwrap();
+        let expected = "&lt;not&amp;html&gt;";
         assert_eq!(expected, into_html(&dom_node));
     }
 }

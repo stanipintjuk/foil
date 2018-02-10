@@ -5,6 +5,7 @@ authors = ["Stani <stanislav.pintjuk@gmail.com>"]
 
 [dependencies]
 peg-syntax-ext = "0.5.0"
+htmlescape = "*"
 
 [dependencies.peg]
 version = "*"
