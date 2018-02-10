@@ -31,6 +31,7 @@ children -> Vec<NodeKind<'input>>
 
 content -> Content
     = s:string {Content::Literal(s)}
+    / pos:#position p:path {Content::Path(p, pos)}
 
 tag_name -> &'input str
     = $([a-zA-Z0-9]+)
@@ -43,6 +44,9 @@ attribute -> Attribute<'input>
 
 string -> String
     = "\"" s:$(("\\\\"/"\\\""/[^\"])*) "\"" { strip_escape_chars(s, "\\", "\"") }
+
+path -> String
+    = "<" s:$(( "\\\\" / "\\>" /[^>])*) ">" { strip_escape_chars(s, "\\", ">") }
 
 whitespace = #quiet<[ \n\t]+>
 
@@ -77,14 +81,23 @@ impl<'a> PartialEq for NodeKind<'a> {
     }
 }
 
+/// Represents different kinds of content in the HTML.
 #[derive(Debug)]
 pub enum Content {
     Literal(String),
+
+    /// Stores the path as a string and the position 
+    /// of this element in the code, so that it is easier
+    /// to generate error messages.
+    Path(String, usize),
 }
 impl PartialEq for Content {
     fn eq(&self, other: &Content) -> bool {
         match (self, other) {
             (&Content::Literal(ref s1), &Content::Literal(ref s2)) => s1 == s2,
+            (&Content::Path(ref p1, ref pos1), 
+             &Content::Path(ref p2, ref pos2)) => p1 == p2 && pos1 == pos2,
+            _ => false
         }
     }
 }
@@ -225,6 +238,7 @@ mod tests {
         use std::collections::HashSet;
 
         let mut expected_symbols = HashSet::new();
+        expected_symbols.insert("<");
         expected_symbols.insert(";");
         expected_symbols.insert("[a-zA-Z0-9]");
         expected_symbols.insert("{");
@@ -244,5 +258,12 @@ mod tests {
         let expected = NodeKind::Content(
             Content::Literal("\"\\testing".to_string()));
         assert_eq!(Ok(expected), node("\"\\\"\\\\testing\""));
+    }
+
+    #[test]
+    fn path_works_with_escaped_chars() {
+        let expected = NodeKind::Content(
+            Content::Path("strange\\folder>name".to_string(), 0));
+        assert_eq!(Ok(expected), node("<strange\\\\folder\\>name>"));
     }
 }

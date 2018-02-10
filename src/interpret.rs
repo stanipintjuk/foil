@@ -27,7 +27,8 @@ fn closed_node_into_html<'a>(node: &ClosedNode<'a>) -> String {
 
 fn content_node_into_html<'a>(node: &Content) -> String {
     match node {
-        &Content::Literal(ref s) => s.to_string()
+        &Content::Literal(ref s) => s.to_string(),
+        &Content::Path(ref p, _) => p.to_string(),
     }
 }
 
