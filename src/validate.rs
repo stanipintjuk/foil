@@ -1,6 +1,7 @@
-use grammar::html::{NodeKind, OpenNode, ClosedNode, Content, Attribute};
+use grammar::html::{NodeKind, Content, Attribute};
 use std::path::Path;
 
+#[deprecated]
 pub fn validate_paths<'a>(node: &'a NodeKind<'a>) 
 -> Result<&'a NodeKind<'a>, Vec<(&'a str, &'a usize)>> {
     let paths = get_flattened_paths(node);
@@ -16,6 +17,24 @@ pub fn validate_paths<'a>(node: &'a NodeKind<'a>)
         Err(non_existent_paths)
     } else {
         Ok(node)
+    }
+}
+
+pub fn validate_and_get_paths<'a>(node: &'a NodeKind<'a>) 
+-> Result<Vec<(&'a str, &'a usize)>, Vec<(&'a str, &'a usize)>> {
+    let paths = get_flattened_paths(node);
+    let mut non_existent_paths = Vec::new();
+
+    for (path, pos) in paths {
+        if !Path::new(path).exists() {
+            non_existent_paths.push((path, pos));
+        }
+    }
+
+    if non_existent_paths.len() > 0 {
+        Err(non_existent_paths)
+    } else {
+        Ok(paths)
     }
 }
 
