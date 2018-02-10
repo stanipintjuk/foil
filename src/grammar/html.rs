@@ -1,4 +1,4 @@
-pub use self::html::node;
+pub use self::html::{node, ParseError};
 
 peg! html(r#"
 use super::*;
@@ -208,11 +208,18 @@ mod tests {
 
     #[test]
     fn returns_correct_error_on_nonsence() {
-        let expected = NodeKind::ClosedNode(
-            ClosedNode{
-                name: "div", 
-                attributes: vec![("class", "row col12")],
-            });
-        assert_eq!(Ok(expected), node("div class=\"row col12\" \n{ some nonsence }"));
+        let mut expected_symbols = HashSet::new();
+        expected_symbols.insert(";");
+        expected_symbols.insert("[a-zA-Z0-9]");
+        expected_symbols.insert("{");
+        expected_symbols.insert("\"");
+
+        let expected = ParseError { 
+            line: 2, 
+            column: 17, 
+            offset: 39, 
+            expected: expected_symbols};
+
+        assert_eq!(Err(expected), node("div class=\"row col12\" \n{ some nonsence }"));
     }
 }
