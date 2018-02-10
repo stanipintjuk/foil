@@ -1,7 +1,8 @@
 extern crate foil;
 use foil::grammar::html;
-use foil::interpret::into_html;
 use std::io::{self, Read};
+use foil::validate::validate_paths;
+use foil::interpret::into_html;
 
 fn main() {
     let mut buffer = String::new();
@@ -11,12 +12,24 @@ fn main() {
 
     let result = html::node(&buffer);
     match result {
-        Ok(node) => println!("{}", into_html(&node)),
-        Err(error) => print_parse_error(error),
+        Ok(html_tree) => {
+            match validate_paths(&html_tree) {
+                Ok(html_tree) => println!("{}", into_html(&html_tree)),
+                Err(paths) => print_invalid_paths(&paths),
+            }
+        },
+        Err(err) => print_html_parse_error(&err),
     }
 }
 
-fn print_parse_error(err: html::ParseError) {
+fn print_invalid_paths<'a>(paths: &Vec<(&'a str, &'a usize)>) {
+    eprintln!("Found invalid paths:");
+    for &(path, position) in paths {
+        eprintln!("`{}` on position {}", path, position)
+    }
+}
+
+fn print_html_parse_error(err: &html::ParseError) {
     eprint!("Error on line {}. Expected one of {:?} on position {}", 
             err.line,
             err.expected,
