@@ -40,7 +40,7 @@ attributes -> Vec<Attribute<'input>>
     = attribute*
 
 attribute -> Attribute<'input>
-    = whitespace n:tag_name "=" v:string { (n, v) }
+    = whitespace n:tag_name "=" v:content { (n, v) }
 
 string -> String
     = "\"" s:$(("\\\\"/"\\\""/[^\"])*) "\"" { strip_escape_chars(s, "\\", "\"") }
@@ -61,7 +61,7 @@ fn strip_escape_chars(s: &str, escape_char: &str, delimiter: &str) -> String {
 }
 
 /// A tuple that describes an attribute's name and value
-pub type Attribute<'a> = (&'a str,  String);
+pub type Attribute<'a> = (&'a str,  Content);
 
 /// A node the DOM tree
 #[derive(Debug)]
@@ -151,7 +151,7 @@ mod tests {
         let expected = NodeKind::OpenNode(
             OpenNode{
                 name: "div", 
-                attributes: vec![("class", "row col12".to_string())], 
+                attributes: vec![("class", Content::Literal("row col12".to_string()))], 
                 children: vec![]
             });
         assert_eq!(Ok(expected), node("div class=\"row col12\" {}"));
@@ -162,7 +162,7 @@ mod tests {
         let expected = NodeKind::ClosedNode(
             ClosedNode{
                 name: "div", 
-                attributes: vec![("class", "row col12".to_string())],
+                attributes: vec![("class", Content::Literal("row col12".to_string()))],
             });
         assert_eq!(Ok(expected), node("div class=\"row col12\";"));
     }
@@ -173,8 +173,8 @@ mod tests {
             OpenNode{
                 name: "div", 
                 attributes: vec![
-                    ("id", "div1".to_string()), 
-                    ("class", "row col12".to_string())], 
+                    ("id", Content::Literal("div1".to_string())), 
+                    ("class", Content::Literal("row col12".to_string()))], 
                 children: vec![]
             });
         assert_eq!(Ok(expected), node("div id=\"div1\" class=\"row col12\" {}"));
@@ -186,8 +186,8 @@ mod tests {
             ClosedNode{
                 name: "div", 
                 attributes: vec![
-                    ("id", "div2".to_string()), 
-                    ("class", "row col12".to_string())],
+                    ("id", Content::Literal("div2".to_string())), 
+                    ("class", Content::Literal("row col12".to_string()))],
             });
         assert_eq!(Ok(expected), node("div id=\"div2\" class=\"row col12\";"));
     }

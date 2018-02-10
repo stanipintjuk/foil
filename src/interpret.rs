@@ -34,7 +34,7 @@ fn content_node_into_html<'a>(node: &Content) -> String {
 
 fn attributes_to_string<'a>(attribs: &Vec<Attribute<'a>>) -> String {
     attribs.iter()
-        .map(|&(n, ref v)| format!("{}=\"{}\"", n, v))
+        .map(|&(n, ref v)| format!("{}=\"{}\"", n, content_node_into_html(v)))
         .fold(String::new(), |acc, attrib|{ format!("{} {}", acc, attrib)})
 }
 
