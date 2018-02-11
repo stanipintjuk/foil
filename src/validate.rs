@@ -20,13 +20,19 @@ pub fn validate_paths<'a>(node: &'a NodeKind<'a>)
     }
 }
 
-pub fn validate_and_get_paths<'a>(node: &'a NodeKind<'a>) 
+pub fn validate_and_get_paths<'a>(node: &'a NodeKind<'a>, dir: &Path) 
 -> Result<Vec<(&'a str, &'a usize)>, Vec<(&'a str, &'a usize)>> {
     let paths = get_flattened_paths(node);
     let mut non_existent_paths = Vec::new();
 
-    for (path, pos) in paths {
-        if !Path::new(path).exists() {
+    for &(path, pos) in paths.iter() {
+
+        let mut full_path = Path::new(path).to_owned();
+        if full_path.is_relative() {
+            full_path = dir.join(Path::new(path));
+        }
+
+        if !full_path.exists() {
             non_existent_paths.push((path, pos));
         }
     }
@@ -90,6 +96,8 @@ fn get_paths_from_nodelist<'a>(nodes: &'a Vec<NodeKind<'a>>) -> Vec<(&'a str, &'
 #[cfg(test)]
 mod tests {
     use super::*;
+    use grammar::html::{NodeKind, OpenNode};
+
 
     #[test]
     fn path_validator_works() {

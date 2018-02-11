@@ -29,7 +29,18 @@ fn closed_node_into_html<'a>(node: &ClosedNode<'a>) -> String {
 fn content_node_into_html<'a>(node: &Content) -> String {
     match node {
         &Content::Literal(ref s) => encode_minimal(s),
-        &Content::Path(ref p, _) => p.to_string(),
+        &Content::Path(ref p, _) => {
+            // if the reference points to a .foil file
+            // then change it to .html
+            if p.ends_with(".foil") {
+                let len = p.len();
+                let mut p = p.to_string();
+                p.truncate(len - 5);
+                format!("{}.html", p)
+            } else {
+                p.to_string()
+            }
+        },
     }
 }
 
