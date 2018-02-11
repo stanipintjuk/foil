@@ -132,7 +132,7 @@ fn parse_and_copy(file_path: &Path, src_root: &Path, out_root: &Path)
         //make sure that the folder exists
         {
             let output_file_dir = output_path.parent().unwrap();
-            create_dir_all(output_file_dir);
+            create_dir_all(output_file_dir).unwrap();
         }
         
         let result = fs::File::create(output_path);
@@ -164,14 +164,13 @@ fn parse_and_copy(file_path: &Path, src_root: &Path, out_root: &Path)
 fn copy_to_output(file: &Path, src_root: &Path, out_root: &Path) 
     -> Result<(), BuildError> {
         let relative_path = file.strip_prefix(src_root).unwrap();
-        let output_path = out_root.join(relative_path);
 
         let output_path = out_root.join(relative_path);
 
         {
             // make sure folder exists
             let output_file_dir = output_path.parent().unwrap();
-            create_dir_all(output_file_dir);
+            create_dir_all(output_file_dir).unwrap();
         }
         let result = fs::copy(file, output_path);
 
@@ -198,15 +197,15 @@ mod tests {
         let tmpdir = TempDir::new("test").unwrap();
         let src_root = tmpdir.path().join("src");
         let out_root = tmpdir.path().join("out");
-        create_dir_all(src_root.to_str().unwrap());
-        create_dir_all(out_root.to_str().unwrap());
+        create_dir_all(src_root.to_str().unwrap()).unwrap();
+        create_dir_all(out_root.to_str().unwrap()).unwrap();
 
         let index_file = src_root.join("index.foil");
         
         {
             let mut f = File::create(index_file).unwrap();
-            f.write_all(b"html { h1 \"test\" }");
-            f.sync_all();
+            f.write_all(b"html { h1 \"test\" }").unwrap();
+            f.sync_all().unwrap();
         }
         
         // Run the build and expect the following file structure
@@ -222,7 +221,7 @@ mod tests {
         let mut contents = String::new();
         {
             let mut f = File::open(out_root.join("index.html")).unwrap();
-            f.read_to_string(&mut contents);
+            f.read_to_string(&mut contents).unwrap();
         }
         assert_eq!(contents, "<html><h1>test</h1></html>");
     }
@@ -241,21 +240,21 @@ mod tests {
         let tmpdir = TempDir::new("test").unwrap();
         let src_root = tmpdir.path().join("src");
         let out_root = tmpdir.path().join("out");
-        create_dir_all(src_root.to_str().unwrap());
-        create_dir_all(out_root.to_str().unwrap());
+        create_dir_all(src_root.to_str().unwrap()).unwrap();
+        create_dir_all(out_root.to_str().unwrap()).unwrap();
 
         let index_file = src_root.join("index.foil");
         {
             let mut f = File::create(index_file).unwrap();
-            f.write_all(b"html { a href=<./resource.txt> \"resource file\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<./resource.txt> \"resource file\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let resource_file = src_root.join("resource.txt");
         {
             let mut f = File::create(resource_file).unwrap();
-            f.write_all(b"Some resources");
-            f.sync_all();
+            f.write_all(b"Some resources").unwrap();
+            f.sync_all().unwrap();
         }
 
         // Run the build and expect the following file structure
@@ -273,13 +272,13 @@ mod tests {
         let mut index_contents = String::new();
         {
             let mut f = File::open(out_root.join("index.html")).unwrap();
-            f.read_to_string(&mut index_contents);
+            f.read_to_string(&mut index_contents).unwrap();
         }
 
         let mut resource_contents = String::new();
         {
             let mut f = File::open(out_root.join("resource.txt")).unwrap();
-            f.read_to_string(&mut resource_contents);
+            f.read_to_string(&mut resource_contents).unwrap();
         }
 
         assert_eq!(index_contents, 
@@ -302,28 +301,28 @@ mod tests {
         let tmpdir = TempDir::new("test").unwrap();
         let src_root = tmpdir.path().join("src");
         let out_root = tmpdir.path().join("out");
-        create_dir_all(src_root.to_str().unwrap());
-        create_dir_all(out_root.to_str().unwrap());
+        create_dir_all(src_root.to_str().unwrap()).unwrap();
+        create_dir_all(out_root.to_str().unwrap()).unwrap();
 
         let index_file = src_root.join("index.foil");
         {
             let mut f = File::create(index_file).unwrap();
-            f.write_all(b"html { a href=<./subsite.foil> \"subsite\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<./subsite.foil> \"subsite\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let subsite_file = src_root.join("subsite.foil");
         {
             let mut f = File::create(subsite_file).unwrap();
-            f.write_all(b"html { a href=<./resource.txt> \"resource file\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<./resource.txt> \"resource file\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let resource_file = src_root.join("resource.txt");
         {
             let mut f = File::create(resource_file).unwrap();
-            f.write_all(b"Some resources");
-            f.sync_all();
+            f.write_all(b"Some resources").unwrap();
+            f.sync_all().unwrap();
         }
 
         // Run the build and expect the following file structure
@@ -343,19 +342,19 @@ mod tests {
         let mut index_contents = String::new();
         {
             let mut f = File::open(out_root.join("index.html")).unwrap();
-            f.read_to_string(&mut index_contents);
+            f.read_to_string(&mut index_contents).unwrap();
         }
 
         let mut subsite_contents = String::new();
         {
             let mut f = File::open(out_root.join("subsite.html")).unwrap();
-            f.read_to_string(&mut subsite_contents);
+            f.read_to_string(&mut subsite_contents).unwrap();
         }
 
         let mut resource_contents = String::new();
         {
             let mut f = File::open(out_root.join("resource.txt")).unwrap();
-            f.read_to_string(&mut resource_contents);
+            f.read_to_string(&mut resource_contents).unwrap();
         }
 
         assert_eq!(index_contents, 
@@ -386,28 +385,28 @@ mod tests {
         let resources_dir = src_root.join("resources");
         let out_sites_dir = out_root.join("sites");
         let out_resources_dir = out_root.join("resources");
-        create_dir_all(sites_dir.to_str().unwrap());
-        create_dir_all(resources_dir.to_str().unwrap());
+        create_dir_all(sites_dir.to_str().unwrap()).unwrap();
+        create_dir_all(resources_dir.to_str().unwrap()).unwrap();
 
         let index_file = src_root.join("index.foil");
         {
             let mut f = File::create(index_file).unwrap();
-            f.write_all(b"html { a href=<./sites/subsite.foil> \"subsite\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<./sites/subsite.foil> \"subsite\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let subsite_file = sites_dir.join("subsite.foil");
         {
             let mut f = File::create(subsite_file).unwrap();
-            f.write_all(b"html { a href=<../resources/resource.txt> \"resource file\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<../resources/resource.txt> \"resource file\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let resource_file = resources_dir.join("resource.txt");
         {
             let mut f = File::create(resource_file).unwrap();
-            f.write_all(b"Some resources");
-            f.sync_all();
+            f.write_all(b"Some resources").unwrap();
+            f.sync_all().unwrap();
         }
 
         // Run the build and expect the following file structure
@@ -431,19 +430,19 @@ mod tests {
         let mut index_contents = String::new();
         {
             let mut f = File::open(out_root.join("index.html")).unwrap();
-            f.read_to_string(&mut index_contents);
+            f.read_to_string(&mut index_contents).unwrap();
         }
 
         let mut subsite_contents = String::new();
         {
             let mut f = File::open(out_sites_dir.join("subsite.html")).unwrap();
-            f.read_to_string(&mut subsite_contents);
+            f.read_to_string(&mut subsite_contents).unwrap();
         }
 
         let mut resource_contents = String::new();
         {
             let mut f = File::open(out_resources_dir.join("resource.txt")).unwrap();
-            f.read_to_string(&mut resource_contents);
+            f.read_to_string(&mut resource_contents).unwrap();
         }
 
         assert_eq!(index_contents, 
@@ -467,20 +466,20 @@ mod tests {
         let tmpdir = TempDir::new("test").unwrap();
         let src_root = tmpdir.path().join("src");
         let out_root = tmpdir.path().join("out");
-        create_dir_all(src_root.to_str().unwrap());
+        create_dir_all(src_root.to_str().unwrap()).unwrap();
 
         let index_file = src_root.join("index.foil");
         {
             let mut f = File::create(index_file).unwrap();
-            f.write_all(b"html { a href=<./about.foil> \"about\" }");
-            f.sync_all();
+            f.write_all(b"html { a href=<./about.foil> \"about\" }").unwrap();
+            f.sync_all().unwrap();
         }
 
         let about_file = src_root.join("about.foil");
         {
             let mut f = File::create(about_file).unwrap();
-            f.write_all(b"a href=<./index.foil> \"go back to index\"");
-            f.sync_all();
+            f.write_all(b"a href=<./index.foil> \"go back to index\"").unwrap();
+            f.sync_all().unwrap();
         }
 
         // Run the build and expect the following file structure
@@ -498,13 +497,13 @@ mod tests {
         let mut index_contents = String::new();
         {
             let mut f = File::open(out_root.join("index.html")).unwrap();
-            f.read_to_string(&mut index_contents);
+            f.read_to_string(&mut index_contents).unwrap();
         }
 
         let mut about_contents = String::new();
         {
             let mut f = File::open(out_root.join("about.html")).unwrap();
-            f.read_to_string(&mut about_contents);
+            f.read_to_string(&mut about_contents).unwrap();
         }
 
         assert_eq!(index_contents, 
