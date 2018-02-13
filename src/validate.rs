@@ -1,4 +1,4 @@
-use grammar::html::{NodeKind, Content, Attribute};
+use grammar::node_tree::{NodeKind, Content, Attribute};
 use std::path::Path;
 
 #[deprecated]
@@ -96,8 +96,7 @@ fn get_paths_from_nodelist<'a>(nodes: &'a Vec<NodeKind<'a>>) -> Vec<(&'a str, &'
 #[cfg(test)]
 mod tests {
     use super::*;
-    use grammar::html::{NodeKind, OpenNode};
-
+    use grammar::{NodeKind, OpenNode};
 
     #[test]
     fn path_validator_works() {

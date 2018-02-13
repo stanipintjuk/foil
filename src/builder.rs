@@ -4,15 +4,15 @@ use std::collections::{HashMap};
 use std::ffi::OsStr;
 use std::fs;
 use std::fs::create_dir_all;
-use grammar::html;
 use validate::validate_and_get_paths;
 use interpret::into_html;
 use std::iter::FromIterator;
+use grammar::{ParseError, node as parse_node};
 
 #[derive(Debug)]
 pub enum BuildError {
     IO(IOError),
-    Parser(html::ParseError),
+    Parser(ParseError),
     InvalidPaths(Vec<(String, usize)>)
 }
 impl PartialEq for BuildError {
@@ -112,7 +112,7 @@ fn parse_and_copy(file_path: &Path, src_root: &Path, out_root: &Path)
             return Err(BuildError::IO(err));
         }
 
-        let result = html::node(&contents);
+        let result = parse_node(&contents);
         if let Err(err) = result {
             return Err(BuildError::Parser(err));
         }

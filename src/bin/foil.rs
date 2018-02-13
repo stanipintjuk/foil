@@ -1,6 +1,6 @@
 extern crate foil;
 use foil::builder::{build_dir, BuildError};
-use foil::grammar::html::ParseError;
+use foil::grammar::ParseError;
 use std::path::{Path, PathBuf};
 use std::env;
 use std::io::{Error as IOError};

@@ -1,4 +1,4 @@
-use grammar::html::{NodeKind, OpenNode, ClosedNode, Content, Attribute};
+use grammar::node_tree::{NodeKind, OpenNode, ClosedNode, Content, Attribute};
 use htmlescape::encode_minimal;
 
 /// Takes an NodeKind and returns the entire html it represents.
@@ -60,7 +60,7 @@ fn node_list_into_html<'a>(nodes: &Vec<NodeKind<'a>>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use grammar::html::node;
+    use grammar::node;
 
     #[test]
     fn self_closing_tag_works() {
