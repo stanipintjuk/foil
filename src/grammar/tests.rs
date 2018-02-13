@@ -136,3 +136,16 @@ fn path_works_with_escaped_chars() {
         Content::Path("strange\\folder>name".to_string(), 0));
     assert_eq!(Ok(expected), node("<strange\\\\folder\\>name>"));
 }
+
+#[test]
+fn content_expression_works() {
+    let expected = NodeKind::Content(
+        Content::Sum(
+            Box::new(Content::Literal("test".to_string())),
+            Box::new(Content::Sum(
+                    Box::new(Content::Literal("should".to_string())),
+                    Box::new(Content::Literal("work".to_string())))))
+        );
+    assert_eq!(Ok(expected), 
+               node("(\"test\" + \"should\" + \"work\")"));
+}

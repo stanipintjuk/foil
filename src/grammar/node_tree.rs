@@ -1,4 +1,3 @@
-use grammar::expression_tree::*;
 /// A tuple that describes an attribute's name and value
 pub type Attribute<'a> = (&'a str,  Content);
 
@@ -29,7 +28,7 @@ pub enum Content {
     /// of this element in the code, so that it is easier
     /// to generate error messages.
     Path(String, usize),
-    Expression(Box<Expression>),
+    Sum(Box<Content>, Box<Content>)
 }
 impl PartialEq for Content {
     fn eq(&self, other: &Content) -> bool {
@@ -37,8 +36,8 @@ impl PartialEq for Content {
             (&Content::Literal(ref s1), &Content::Literal(ref s2)) => s1 == s2,
             (&Content::Path(ref p1, ref pos1), 
              &Content::Path(ref p2, ref pos2)) => p1 == p2 && pos1 == pos2,
-            (&Content::Expression(ref l),
-             &Content::Expression(ref r)) => l == r,
+            (&Content::Sum(ref l1, ref l2),
+             &Content::Sum(ref r1, ref r2)) => l1 == r1 && l2 == r2,
             _ => false
         }
     }

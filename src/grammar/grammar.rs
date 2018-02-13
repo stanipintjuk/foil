@@ -1,9 +1,8 @@
-pub use self::html::{node, expression, ParseError};
+pub use self::html::{node, ParseError};
 
 peg! html(r#"
 use super::*;
 use super::super::node_tree::*;
-use super::super::expression_tree::*;
 
 #[pub]
 node -> NodeKind<'input>
@@ -31,11 +30,15 @@ children -> Vec<NodeKind<'input>>
     = "{" whitespace? c:node* whitespace? "}" { c }
     / c:node_kind { vec![c] }
 
+#[pub]
 content -> Content
     = s:string {Content::Literal(s)}
     / pos:#position p:path {Content::Path(p, pos)}
-    / "(" whitespace? expr:expression whitespace? ")" 
-        { Content::Expression(Box::new(expr)) }
+    / "(" whitespace? c:content_expression whitespace? ")" { c }
+
+content_expression -> Content
+    = l:content whitespace? "+" whitespace? r:content_expression {Content::Sum(Box::new(l), Box::new(r))}
+    / l:content whitespace? "+" whitespace? r:content {Content::Sum(Box::new(l), Box::new(r))}
 
 tag_name -> &'input str
     = $([a-zA-Z0-9]+)
@@ -53,18 +56,6 @@ path -> String
     = "<" s:$(( "\\\\" / "\\>" /[^>])*) ">" { strip_escape_chars(s, "\\", ">") }
 
 whitespace = #quiet<[ \n\t]+>
-
-
-// Expression parser
-#[pub]
-expression -> Expression
-    = l:atom whitespace? "+" whitespace? r:atom { Expression::Sum(l, r) }
-    / a:atom { Expression::Atom(a) }
-
-atom -> Atom
-    = c:content { Atom::Content(c) }
-    / "(" whitespace? expr:expression whitespace? ")" { Atom::Expression(Box::new(expr)) }
-
 "#);
 
 fn strip_escape_chars(s: &str, escape_char: &str, delimiter: &str) -> String {

@@ -46,13 +46,7 @@ pub fn validate_and_get_paths<'a>(node: &'a NodeKind<'a>, dir: &Path)
 
 fn get_flattened_paths<'a>(node: &'a NodeKind<'a>) -> Vec<(&'a str, &'a usize)> {
     match node {
-        &NodeKind::Content(ref content) => {
-            if let Some(path) = content_to_path(content) {
-                vec![path]
-            } else {
-                vec![]
-            }
-        },
+        &NodeKind::Content(ref content) => content_to_path(content),
         &NodeKind::ClosedNode(ref node) => 
             get_paths_from_attributes(&node.attributes),
         &NodeKind::OpenNode(ref node) => {
@@ -64,10 +58,15 @@ fn get_flattened_paths<'a>(node: &'a NodeKind<'a>) -> Vec<(&'a str, &'a usize)> 
     }
 }
 
-fn content_to_path<'a>(content: &'a Content) -> Option<(&'a str, &'a usize)> {
+fn content_to_path<'a>(content: &'a Content) -> Vec<(&'a str, &'a usize)> {
     match content {
-        &Content::Path(ref path, ref pos) => Some((path, pos)),
-        _ => None,
+        &Content::Path(ref path, ref pos) => vec![(path, pos)],
+        &Content::Sum(ref l, ref r) => {
+            let mut list = content_to_path(l);
+            list.append(&mut content_to_path(r));
+            list
+        }
+        _ => vec![],
     }
 }
 
@@ -76,9 +75,7 @@ fn get_paths_from_attributes<'a>(attribs: &'a Vec<Attribute<'a>>)
     let mut paths = Vec::new();
 
     for &(_, ref content) in attribs {
-        if let Some(path) = content_to_path(content) {
-            paths.push(path);
-        }
+        paths.append(&mut content_to_path(content));
     }
 
     paths

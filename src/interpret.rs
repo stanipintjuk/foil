@@ -1,5 +1,4 @@
 use grammar::node_tree::{NodeKind, OpenNode, ClosedNode, Content, Attribute};
-use grammar::expression_tree::{Expression, Atom};
 use htmlescape::encode_minimal;
 
 /// Takes an NodeKind and returns the entire html it represents.
@@ -42,21 +41,8 @@ fn content_node_into_html<'a>(node: &Content) -> String {
                 p.to_string()
             }
         },
-        &Content::Expression(ref expr) => evaluate_to_html(expr),
-    }
-}
-
-fn evaluate_to_html(expr: &Expression) -> String {
-    match expr {
-        &Expression::Sum(ref l, ref r) => format!("{}{}", evaluate_atom_to_html(l), evaluate_atom_to_html(r)),
-        &Expression::Atom(ref a) => evaluate_atom_to_html(a),
-    }
-}
-
-fn evaluate_atom_to_html(atom: &Atom) -> String {
-    match atom {
-        &Atom::Content(ref c) => content_node_into_html(c),
-        &Atom::Expression(ref expr) => evaluate_to_html(expr),
+        &Content::Sum(ref l, ref r) => 
+            format!("{}{}", content_node_into_html(l), content_node_into_html(r)),
     }
 }
 
