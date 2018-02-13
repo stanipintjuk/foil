@@ -8,10 +8,13 @@ use validate::validate_and_get_paths;
 use interpret::into_html;
 use std::iter::FromIterator;
 use grammar::{ParseError, node as parse_node};
+use fs_extra::dir;
+use fs_extra::error::Error as FsError;
 
 #[derive(Debug)]
 pub enum BuildError {
     IO(IOError),
+    FsError(FsError),
     Parser(ParseError),
     InvalidPaths(Vec<(String, usize)>)
 }
@@ -172,11 +175,26 @@ fn copy_to_output(file: &Path, src_root: &Path, out_root: &Path)
             let output_file_dir = output_path.parent().unwrap();
             create_dir_all(output_file_dir).unwrap();
         }
-        let result = fs::copy(file, output_path);
+
+        let result = 
+            if !file.is_dir() {
+                fs::copy(file, output_path)
+                    .map_err(BuildError::IO)
+            } else {
+                let opts = dir::CopyOptions { 
+                    overwrite: true, 
+                    buffer_size: 64000,
+                    skip_exist: false,
+                    copy_inside: true,
+                    depth: 0
+                };
+                dir::copy(file, output_path, &opts)
+                    .map_err(BuildError::FsError)
+            };
 
         match result {
             Ok(_) => Ok(()),
-            Err(err) => Err(BuildError::IO(err)),
+            Err(err) => Err(err),
         }
     }
 
@@ -510,5 +528,88 @@ mod tests {
                    "<html><a href=\"./about.html\">about</a></html>");
         assert_eq!(about_contents, "<a href=\"./index.html\">go back to index</a>");
     }
+
+    #[test]
+    fn directory_recursive_copy_works() {
+        // Create a tmp directory with the src root having an index file 
+        // and a referenced directory
+        //
+        // tmp 
+        // ├── src
+        // │   ├── index.foil
+        // │   └── sites
+        // │       ├── subsite.foil
+        // │       └── resource.txt
+        // └── out
+        
+        let tmpdir = TempDir::new("test").unwrap();
+        let src_root = tmpdir.path().join("src");
+        let out_root = tmpdir.path().join("out");
+        let sites_dir = src_root.join("sites");
+        let out_sites_dir = out_root.join("sites");
+        create_dir_all(sites_dir.to_str().unwrap()).unwrap();
+
+        let index_file = src_root.join("index.foil");
+        {
+            let mut f = File::create(index_file).unwrap();
+            f.write_all(b"html { a href=<./sites> \"subsites\" }").unwrap();
+            f.sync_all().unwrap();
+        }
+
+        let subsite_file = sites_dir.join("subsite.foil");
+        {
+            let mut f = File::create(subsite_file).unwrap();
+            f.write_all(b"html { \"subsite\" }").unwrap();
+            f.sync_all().unwrap();
+        }
+
+        let resource_file = sites_dir.join("resource.txt");
+        {
+            let mut f = File::create(resource_file).unwrap();
+            f.write_all(b"Some resources").unwrap();
+            f.sync_all().unwrap();
+        }
+
+        // Run the build and expect the following file structure
+        // tmp 
+        // ├── src
+        // │   ├── index.foil
+        // │   └── sites
+        // │       ├── subsite.foil
+        // │       └── resource.txt
+        // └── out
+        //     ├── index.html
+        //     └── sites
+        //         ├── subsite.foil
+        //         └── resource.txt
+        
+        let result = build_dir(src_root, out_root.clone());
+        assert_eq!(Ok(()), result);
+
+        let mut index_contents = String::new();
+        {
+            let mut f = File::open(out_root.join("index.html")).unwrap();
+            f.read_to_string(&mut index_contents).unwrap();
+        }
+
+        let mut subsite_contents = String::new();
+        {
+            let mut f = File::open(out_sites_dir.join("subsite.foil")).unwrap();
+            f.read_to_string(&mut subsite_contents).unwrap();
+        }
+
+        let mut resource_contents = String::new();
+        {
+            let mut f = File::open(out_sites_dir.join("resource.txt")).unwrap();
+            f.read_to_string(&mut resource_contents).unwrap();
+        }
+
+        assert_eq!(index_contents, 
+                   "<html><a href=\"./sites\">subsites</a></html>");
+        assert_eq!(subsite_contents, 
+                   "html { \"subsite\" }");
+        assert_eq!(resource_contents, "Some resources");
+    }
+
 
 }

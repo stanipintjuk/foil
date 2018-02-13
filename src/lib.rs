@@ -5,6 +5,7 @@
 extern crate tempdir;
 
 extern crate htmlescape;
+extern crate fs_extra;
 pub mod grammar;
 pub mod interpret;
 pub mod validate;

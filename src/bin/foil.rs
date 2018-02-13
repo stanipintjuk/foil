@@ -1,9 +1,11 @@
 extern crate foil;
+extern crate fs_extra;
 use foil::builder::{build_dir, BuildError};
 use foil::grammar::ParseError;
 use std::path::{Path, PathBuf};
 use std::env;
 use std::io::{Error as IOError};
+use fs_extra::error::Error as FsError;
 
 fn main() {
     let param = get_parameter();
@@ -37,6 +39,7 @@ fn print_build_success() {
 fn print_build_error(err: &BuildError) {
     match err {
         &BuildError::IO(ref err) => print_io_error(err),
+        &BuildError::FsError(ref err) => print_fs_error(err),
         &BuildError::Parser(ref err) => print_html_parse_error(err),
         &BuildError::InvalidPaths(ref paths) => print_invalid_paths(paths)
     }
@@ -44,6 +47,10 @@ fn print_build_error(err: &BuildError) {
 
 fn print_io_error(err: &IOError) {
     eprintln!("IOError: {}", err);
+}
+
+fn print_fs_error(err: &FsError) {
+    eprintln!("FsError: {}", err);
 }
 
 fn print_usage() {
