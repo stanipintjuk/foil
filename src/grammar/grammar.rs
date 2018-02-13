@@ -1,8 +1,9 @@
-pub use self::html::{node, ParseError};
+pub use self::html::{node, expression, ParseError};
 
 peg! html(r#"
 use super::*;
 use super::super::node_tree::*;
+use super::super::expression_tree::*;
 
 #[pub]
 node -> NodeKind<'input>
@@ -33,6 +34,8 @@ children -> Vec<NodeKind<'input>>
 content -> Content
     = s:string {Content::Literal(s)}
     / pos:#position p:path {Content::Path(p, pos)}
+    / "(" whitespace? expr:expression whitespace? ")" 
+        { Content::Expression(Box::new(expr)) }
 
 tag_name -> &'input str
     = $([a-zA-Z0-9]+)
@@ -50,6 +53,17 @@ path -> String
     = "<" s:$(( "\\\\" / "\\>" /[^>])*) ">" { strip_escape_chars(s, "\\", ">") }
 
 whitespace = #quiet<[ \n\t]+>
+
+
+// Expression parser
+#[pub]
+expression -> Expression
+    = l:atom whitespace? "+" whitespace? r:atom { Expression::Sum(l, r) }
+    / a:atom { Expression::Atom(a) }
+
+atom -> Atom
+    = c:content { Atom::Content(c) }
+    / "(" whitespace? expr:expression whitespace? ")" { Atom::Expression(Box::new(expr)) }
 
 "#);
 

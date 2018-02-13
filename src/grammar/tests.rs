@@ -112,6 +112,7 @@ fn returns_correct_error_on_nonsence() {
     expected_symbols.insert("[a-zA-Z0-9]");
     expected_symbols.insert("{");
     expected_symbols.insert("\"");
+    expected_symbols.insert("(");
 
     let expected = ParseError { 
         line: 2, 
