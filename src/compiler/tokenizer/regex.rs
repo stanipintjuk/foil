@@ -28,6 +28,13 @@ pub fn match_int<'a>(text: &'a str) -> Option<Match<'a>> {
     RE.find(text)
 }
 
+pub fn match_string<'a>(text: &'a str) -> Option<Match<'a>> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("^\"([^\\\\\"]|\\\\.)*\"").unwrap();
+    }
+    RE.find(text)
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -157,6 +164,43 @@ mod tests {
             let expected = "-10";
             let actual = match_int(input).unwrap().as_str();
             assert_eq!(actual, expected);
+        }
+    }
+
+    mod match_string_tests {
+        use super::super::match_string;
+
+        #[test]
+        fn trivial_test() {
+            let input = "\"test\" ";
+            let expected = "\"test\"";
+            let actual  = match_string(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_escpad_qoutes() {
+            let input = "\"test\\\"test\" ";
+            let expected = "\"test\\\"test\"";
+            let actual = match_string(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_escaped_backslash_before_escaped_quote() {
+            let input = "\"test\\\\\\\"test\"  ";
+            let expected = "\"test\\\\\\\"test\"";
+            let actual = match_string(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_backslash() {
+            //Strings should allow for standalone backslashes
+            let input = "\"test\\test\"";
+            let expected = "\"test\\test\"";
+            let actual = match_string(input).unwrap().as_str();
+            assert_eq!(expected, actual);
         }
     }
 }
