@@ -35,6 +35,13 @@ pub fn match_string<'a>(text: &'a str) -> Option<Match<'a>> {
     RE.find(text)
 }
 
+pub fn match_path<'a>(text: &'a str) -> Option<Match<'a>> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("^<([^\\\\>]|\\\\.)*>").unwrap();
+    }
+    RE.find(text)
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -200,6 +207,43 @@ mod tests {
             let input = "\"test\\test\"";
             let expected = "\"test\\test\"";
             let actual = match_string(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+    }
+
+    mod match_paths_tsts{
+        use super::super::match_path;
+
+        #[test]
+        fn trivial_test() {
+            let input = "<path> ";
+            let expected = "<path>";
+            let actual  = match_path(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_escpad_delims() {
+            let input = "<test\\>test> ";
+            let expected = "<test\\>test>";
+            let actual = match_path(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_escaped_backslash_before_escaped_delim() {
+            let input = "<test\\\\\\>test>  ";
+            let expected = "<test\\\\\\>test>";
+            let actual = match_path(input).unwrap().as_str();
+            assert_eq!(expected, actual);
+        }
+
+        #[test]
+        fn works_with_backslash() {
+            //Strings should allow for standalone backslashes
+            let input = "<test\\test>";
+            let expected = "<test\\test>";
+            let actual = match_path(input).unwrap().as_str();
             assert_eq!(expected, actual);
         }
     }

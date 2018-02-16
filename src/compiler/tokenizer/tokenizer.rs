@@ -38,11 +38,29 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn lex_strlit(&mut self) -> Option<Token<'a>> {
-        None
+        let matched = match_string(&self.buf[self.pos..]);
+        if matched == None {
+            return None;
+        }
+        let matched = matched.unwrap();
+        let mstr = matched.as_str();
+        let mstr = &mstr[1..mstr.len()-1];
+
+        self.pos += matched.end();
+        Some(Token::Val(Val::String(mstr)))
     }
 
     fn lex_pathlit(&mut self) -> Option<Token<'a>> {
-        None
+        let matched = match_path(&self.buf[self.pos..]);
+        if matched == None {
+            return None;
+        }
+        let matched = matched.unwrap();
+        let mstr = matched.as_str();
+        let mstr = &mstr[1..mstr.len()-1];
+
+        self.pos += matched.end();
+        Some(Token::Val(Val::Path(mstr)))
     }
 
     fn lex_bareword(&mut self) -> Option<Token<'a>> {
@@ -58,7 +76,7 @@ impl<'a> Tokenizer<'a> {
             "set" => Token::Keyword(Keyword::Set),
             x => Token::Id(x),
         };
-        self.pos += (matched.end());
+        self.pos += matched.end();
         Some(token)
         
     }
@@ -66,12 +84,12 @@ impl<'a> Tokenizer<'a> {
     fn lex_numlit(&mut self) -> Option<Token<'a>> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
-            self.pos = mdouble.end();
+            self.pos += mdouble.end();
             Some(Token::Val(Val::Double(d)))
 
         } else if let Some(mint) = match_int(&self.buf[self.pos..]) {
             let i = mint.as_str().parse::<i64>().unwrap();
-            self.pos = mint.end();
+            self.pos += mint.end();
             Some(Token::Val(Val::Int(i)))
 
         } else {
@@ -130,9 +148,6 @@ impl<'a> Iterator for Tokenizer<'a> {
 mod tests {
     use super::*;
     use super::super::tokens::*;
-    use std::cmp::PartialEq;
-    use std::slice::Iter;
-    use std::iter::Iterator;
 
     #[test]
     fn test_tokenizer_native_ops_work() {
