@@ -76,6 +76,7 @@ mod tests {
         }
 
     }
+
     mod match_bare_word_tests {
         use super::super::match_bare_word;
         #[test]
@@ -247,4 +248,5 @@ mod tests {
             assert_eq!(expected, actual);
         }
     }
+
 }

@@ -18,63 +18,69 @@ impl<'a> Tokenizer<'a> {
     fn lex_assign_or_equals(&mut self) -> Option<Token<'a>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
+                let result = Some(Token::Op(self.pos, Op::Equals));
                 self.pos += 2;
-                Some(Token::Op(Op::Equals))
+                return result;
         } else {
+            let result = Some(Token::Op(self.pos, Op::Assign));
             self.pos += 1;
-            Some(Token::Op(Op::Assign))
+            return result;
         }
     }
 
     fn lex_mul_or_pow(&mut self) -> Option<Token<'a>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
+                let result = Some(Token::Op(self.pos, Op::Pow));
                 self.pos += 2;
-                Some(Token::Op(Op::Pow))
+                return result;
         } else {
+            let result = Some(Token::Op(self.pos, Op::Mul));
             self.pos += 1;
-            Some(Token::Op(Op::Mul))
+            return result;
         }
     }
 
     fn lex_strlit(&mut self) -> Option<Token<'a>> {
         let matched = match_string(&self.buf[self.pos..]);
         if matched == None {
-            return None;
+            return Some(self.garbage());
         }
         let matched = matched.unwrap();
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
+        let result = Some(Token::Val(self.pos, Val::String(mstr)));
         self.pos += matched.end();
-        Some(Token::Val(Val::String(mstr)))
+        return result;
     }
 
     fn lex_pathlit(&mut self) -> Option<Token<'a>> {
         let matched = match_path(&self.buf[self.pos..]);
         if matched == None {
-            return None;
+            return Some(self.garbage());
         }
         let matched = matched.unwrap();
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
+        let result = Some(Token::Val(self.pos, Val::Path(mstr)));
         self.pos += matched.end();
-        Some(Token::Val(Val::Path(mstr)))
+        return result;
     }
 
     fn lex_bareword(&mut self) -> Option<Token<'a>> {
         let matched = match_bare_word(&self.buf[self.pos..]);
         if matched == None {
-            return None
+            return Some(self.garbage());
         }
         let matched =  matched.unwrap();
         let token = match matched.as_str() {
-            "let" => Token::Keyword(Keyword::Let),
-            "fn" => Token::Keyword(Keyword::Fn),
-            "import" => Token::Keyword(Keyword::Import),
-            "set" => Token::Keyword(Keyword::Set),
-            x => Token::Id(x),
+            "let" => Token::Keyword(self.pos, Keyword::Let),
+            "fn" => Token::Keyword(self.pos, Keyword::Fn),
+            "import" => Token::Keyword(self.pos, Keyword::Import),
+            "set" => Token::Keyword(self.pos, Keyword::Set),
+            x => Token::Id(self.pos, x),
         };
         self.pos += matched.end();
         Some(token)
@@ -84,17 +90,23 @@ impl<'a> Tokenizer<'a> {
     fn lex_numlit(&mut self) -> Option<Token<'a>> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
+            let result = Some(Token::Val(self.pos, Val::Double(d)));
             self.pos += mdouble.end();
-            Some(Token::Val(Val::Double(d)))
+            return result;
 
         } else if let Some(mint) = match_int(&self.buf[self.pos..]) {
             let i = mint.as_str().parse::<i64>().unwrap();
+            let result = Some(Token::Val(self.pos, Val::Int(i)));
             self.pos += mint.end();
-            Some(Token::Val(Val::Int(i)))
-
+            return result;
         } else {
-            None
+            Some(self.garbage())
         }
+    }
+    fn garbage(&mut self) -> Token<'a> {
+        let token = Token::Garbage(self.pos, &self.buf[self.pos..]);
+        self.pos = self.buf.len();
+        token
     }
 }
 impl<'a> Iterator for Tokenizer<'a> {
@@ -113,24 +125,29 @@ impl<'a> Iterator for Tokenizer<'a> {
         let current_char = current_char.unwrap();
         match current_char {
             '+' => {
+                let res = Some(Token::Op(self.pos, Op::Add));
                 self.pos += 1;
-                Some(Token::Op(Op::Add))
+                return res;
             },
             '-' => {
+                let res = Some(Token::Op(self.pos, Op::Sub));
                 self.pos += 1;
-                Some(Token::Op(Op::Sub))
+                return res;
             },
             '/' => {
+                let res = Some(Token::Op(self.pos, Op::Div));
                 self.pos += 1;
-                Some(Token::Op(Op::Div))
+                return res;
             },
             '%' => {
+                let res = Some(Token::Op(self.pos, Op::Mod));
                 self.pos += 1;
-                Some(Token::Op(Op::Mod))
+                return res;
             },
             '!' => {
+                let res = Some(Token::Op(self.pos, Op::Not));
                 self.pos += 1;
-                Some(Token::Op(Op::Not))
+                return res;
             },
             '=' => self.lex_assign_or_equals(),
             '*' => self.lex_mul_or_pow(),
@@ -154,15 +171,15 @@ mod tests {
         let input = "- * / % ** + == = !";
 
         let expected = vec![
-            Token::Op(Op::Sub),
-            Token::Op(Op::Mul),
-            Token::Op(Op::Div),
-            Token::Op(Op::Mod),
-            Token::Op(Op::Pow),
-            Token::Op(Op::Add),
-            Token::Op(Op::Equals),
-            Token::Op(Op::Assign),
-            Token::Op(Op::Not),
+            Token::Op(0, Op::Sub),
+            Token::Op(2, Op::Mul),
+            Token::Op(4, Op::Div),
+            Token::Op(6, Op::Mod),
+            Token::Op(8, Op::Pow),
+            Token::Op(11, Op::Add),
+            Token::Op(13, Op::Equals),
+            Token::Op(16, Op::Assign),
+            Token::Op(18, Op::Not),
         ];
 
         let actual: Vec<Token> = Tokenizer::new(input).collect();
@@ -174,10 +191,10 @@ mod tests {
         let input = "123 123.123 \"string\" <path>";
         
         let expected = vec![
-            Token::Val(Val::Int(123)),
-            Token::Val(Val::Double(123.123)),
-            Token::Val(Val::String("string")),
-            Token::Val(Val::Path("path")),
+            Token::Val(0, Val::Int(123)),
+            Token::Val(4, Val::Double(123.123)),
+            Token::Val(12, Val::String("string")),
+            Token::Val(21, Val::Path("path")),
         ];
 
         let actual: Vec<Token> = Tokenizer::new(input).collect();
@@ -189,12 +206,28 @@ mod tests {
         let input = "let fn import set";
         
         let expected = vec![
-            Token::Keyword(Keyword::Let),
-            Token::Keyword(Keyword::Fn),
-            Token::Keyword(Keyword::Import),
-            Token::Keyword(Keyword::Set),
+            Token::Keyword(0, Keyword::Let),
+            Token::Keyword(4, Keyword::Fn),
+            Token::Keyword(7, Keyword::Import),
+            Token::Keyword(14, Keyword::Set),
         ];
 
+        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_garbage_string() {
+        let input = "\"test ";
+        let expected = vec![ Token::Garbage(0, "\"test ") ];
+        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_garbage_path() {
+        let input = "<path ";
+        let expected = vec![ Token::Garbage(0, "<path ") ];
         let actual: Vec<Token> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }

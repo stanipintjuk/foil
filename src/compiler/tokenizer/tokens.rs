@@ -1,10 +1,11 @@
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub enum Token<'a> {
-    Op(Op),
-    Val(Val<'a>),
-    Keyword(Keyword),
-    Id(&'a str)
+    Op(usize, Op),
+    Val(usize, Val<'a>),
+    Keyword(usize, Keyword),
+    Id(usize, &'a str),
+    Garbage(usize, &'a str),
 }
 
 #[derive(PartialEq)]
