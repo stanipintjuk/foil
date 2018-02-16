@@ -18,11 +18,11 @@ impl<'a> Tokenizer<'a> {
     fn lex_assign_or_equals(&mut self) -> Option<Token<'a>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
-                let result = Some(Token::Op(self.pos, Op::Equals));
+                let result = Some(Token::BinOp(self.pos, BinOp::Equals));
                 self.pos += 2;
                 return result;
         } else {
-            let result = Some(Token::Op(self.pos, Op::Assign));
+            let result = Some(Token::BinOp(self.pos, BinOp::Assign));
             self.pos += 1;
             return result;
         }
@@ -31,11 +31,11 @@ impl<'a> Tokenizer<'a> {
     fn lex_mul_or_pow(&mut self) -> Option<Token<'a>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
-                let result = Some(Token::Op(self.pos, Op::Pow));
+                let result = Some(Token::BinOp(self.pos, BinOp::Pow));
                 self.pos += 2;
                 return result;
         } else {
-            let result = Some(Token::Op(self.pos, Op::Mul));
+            let result = Some(Token::BinOp(self.pos, BinOp::Mul));
             self.pos += 1;
             return result;
         }
@@ -125,27 +125,27 @@ impl<'a> Iterator for Tokenizer<'a> {
         let current_char = current_char.unwrap();
         match current_char {
             '+' => {
-                let res = Some(Token::Op(self.pos, Op::Add));
+                let res = Some(Token::BinOp(self.pos, BinOp::Add));
                 self.pos += 1;
                 return res;
             },
             '-' => {
-                let res = Some(Token::Op(self.pos, Op::Sub));
+                let res = Some(Token::BinOp(self.pos, BinOp::Sub));
                 self.pos += 1;
                 return res;
             },
             '/' => {
-                let res = Some(Token::Op(self.pos, Op::Div));
+                let res = Some(Token::BinOp(self.pos, BinOp::Div));
                 self.pos += 1;
                 return res;
             },
             '%' => {
-                let res = Some(Token::Op(self.pos, Op::Mod));
+                let res = Some(Token::BinOp(self.pos, BinOp::Mod));
                 self.pos += 1;
                 return res;
             },
             '!' => {
-                let res = Some(Token::Op(self.pos, Op::Not));
+                let res = Some(Token::UnaryOp(self.pos, UnaryOp::Not));
                 self.pos += 1;
                 return res;
             },
@@ -171,15 +171,15 @@ mod tests {
         let input = "- * / % ** + == = !";
 
         let expected = vec![
-            Token::Op(0, Op::Sub),
-            Token::Op(2, Op::Mul),
-            Token::Op(4, Op::Div),
-            Token::Op(6, Op::Mod),
-            Token::Op(8, Op::Pow),
-            Token::Op(11, Op::Add),
-            Token::Op(13, Op::Equals),
-            Token::Op(16, Op::Assign),
-            Token::Op(18, Op::Not),
+            Token::BinOp(0, BinOp::Sub),
+            Token::BinOp(2, BinOp::Mul),
+            Token::BinOp(4, BinOp::Div),
+            Token::BinOp(6, BinOp::Mod),
+            Token::BinOp(8, BinOp::Pow),
+            Token::BinOp(11, BinOp::Add),
+            Token::BinOp(13, BinOp::Equals),
+            Token::BinOp(16, BinOp::Assign),
+            Token::UnaryOp(18, UnaryOp::Not),
         ];
 
         let actual: Vec<Token> = Tokenizer::new(input).collect();

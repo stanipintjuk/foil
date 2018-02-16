@@ -1,7 +1,9 @@
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Token<'a> {
-    Op(usize, Op),
+    BinOp(usize, BinOp),
+    UnaryOp(usize, UnaryOp),
     Val(usize, Val<'a>),
     Keyword(usize, Keyword),
     Id(usize, &'a str),
@@ -10,20 +12,28 @@ pub enum Token<'a> {
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-pub enum Op {
+#[derive(Clone)]
+pub enum BinOp {
     Add,
     Sub,
     Mul,
     Div,
     Mod,
     Pow,
-    Not,
     Assign,
     Equals,
 }
 
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
+pub enum UnaryOp {
+    Not
+}
+
+#[derive(PartialEq)]
+#[derive(Debug)]
+#[derive(Clone)]
 pub enum Val<'a> {
     Int(i64),
     Double(f64),
@@ -33,6 +43,7 @@ pub enum Val<'a> {
 
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum Keyword {
     Let,
     Fn,
