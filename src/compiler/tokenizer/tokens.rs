@@ -7,7 +7,6 @@ pub enum Token<'a> {
     Val(usize, Val<'a>),
     Keyword(usize, Keyword),
     Id(usize, &'a str),
-    Garbage(usize, &'a str),
 }
 
 #[derive(PartialEq)]

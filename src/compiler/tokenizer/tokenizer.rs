@@ -1,6 +1,13 @@
 use super::tokens::*;
 use super::regex::*;
 
+
+#[derive(PartialEq)]
+#[derive(Debug)]
+pub enum LexError<'a> {
+    Garbage(usize, &'a str)
+}
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -15,33 +22,33 @@ impl<'a> Tokenizer<'a> {
     fn char_at(&self, pos: usize) -> Option<char> {
         self.buf.chars().nth(pos)
     }
-    fn lex_assign_or_equals(&mut self) -> Option<Token<'a>> {
+    fn lex_assign_or_equals(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
-                let result = Some(Token::BinOp(self.pos, BinOp::Equals));
+                let result = Some(Ok(Token::BinOp(self.pos, BinOp::Equals)));
                 self.pos += 2;
                 return result;
         } else {
-            let result = Some(Token::BinOp(self.pos, BinOp::Assign));
+            let result = Some(Ok(Token::BinOp(self.pos, BinOp::Assign)));
             self.pos += 1;
             return result;
         }
     }
 
-    fn lex_mul_or_pow(&mut self) -> Option<Token<'a>> {
+    fn lex_mul_or_pow(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         if (self.char_at(self.pos), 
             self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
-                let result = Some(Token::BinOp(self.pos, BinOp::Pow));
+                let result = Some(Ok(Token::BinOp(self.pos, BinOp::Pow)));
                 self.pos += 2;
                 return result;
         } else {
-            let result = Some(Token::BinOp(self.pos, BinOp::Mul));
+            let result = Some(Ok(Token::BinOp(self.pos, BinOp::Mul)));
             self.pos += 1;
             return result;
         }
     }
 
-    fn lex_strlit(&mut self) -> Option<Token<'a>> {
+    fn lex_strlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         let matched = match_string(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -50,12 +57,12 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        let result = Some(Token::Val(self.pos, Val::String(mstr)));
+        let result = Some(Ok(Token::Val(self.pos, Val::String(mstr))));
         self.pos += matched.end();
         return result;
     }
 
-    fn lex_pathlit(&mut self) -> Option<Token<'a>> {
+    fn lex_pathlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         let matched = match_path(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -64,12 +71,12 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        let result = Some(Token::Val(self.pos, Val::Path(mstr)));
+        let result = Some(Ok(Token::Val(self.pos, Val::Path(mstr))));
         self.pos += matched.end();
         return result;
     }
 
-    fn lex_bareword(&mut self) -> Option<Token<'a>> {
+    fn lex_bareword(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         let matched = match_bare_word(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -83,34 +90,35 @@ impl<'a> Tokenizer<'a> {
             x => Token::Id(self.pos, x),
         };
         self.pos += matched.end();
-        Some(token)
+        Some(Ok(token))
         
     }
 
-    fn lex_numlit(&mut self) -> Option<Token<'a>> {
+    fn lex_numlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
-            let result = Some(Token::Val(self.pos, Val::Double(d)));
+            let result = Some(Ok(Token::Val(self.pos, Val::Double(d))));
             self.pos += mdouble.end();
             return result;
 
         } else if let Some(mint) = match_int(&self.buf[self.pos..]) {
             let i = mint.as_str().parse::<i64>().unwrap();
-            let result = Some(Token::Val(self.pos, Val::Int(i)));
+            let result = Some(Ok(Token::Val(self.pos, Val::Int(i))));
             self.pos += mint.end();
             return result;
+
         } else {
             Some(self.garbage())
         }
     }
-    fn garbage(&mut self) -> Token<'a> {
-        let token = Token::Garbage(self.pos, &self.buf[self.pos..]);
+    fn garbage(&mut self) -> Result<Token<'a>, LexError<'a>> {
+        let err = LexError::Garbage(self.pos, &self.buf[self.pos..]);
         self.pos = self.buf.len();
-        token
+        Err(err)
     }
 }
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = Token<'a>;
+    type Item = Result<Token<'a>, LexError<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(end) = end_of_whitespace(&self.buf[self.pos..]) {
                 self.pos += end;
@@ -125,27 +133,27 @@ impl<'a> Iterator for Tokenizer<'a> {
         let current_char = current_char.unwrap();
         match current_char {
             '+' => {
-                let res = Some(Token::BinOp(self.pos, BinOp::Add));
+                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Add)));
                 self.pos += 1;
                 return res;
             },
             '-' => {
-                let res = Some(Token::BinOp(self.pos, BinOp::Sub));
+                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Sub)));
                 self.pos += 1;
                 return res;
             },
             '/' => {
-                let res = Some(Token::BinOp(self.pos, BinOp::Div));
+                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Div)));
                 self.pos += 1;
                 return res;
             },
             '%' => {
-                let res = Some(Token::BinOp(self.pos, BinOp::Mod));
+                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Mod)));
                 self.pos += 1;
                 return res;
             },
             '!' => {
-                let res = Some(Token::UnaryOp(self.pos, UnaryOp::Not));
+                let res = Some(Ok(Token::UnaryOp(self.pos, UnaryOp::Not)));
                 self.pos += 1;
                 return res;
             },
@@ -171,18 +179,18 @@ mod tests {
         let input = "- * / % ** + == = !";
 
         let expected = vec![
-            Token::BinOp(0, BinOp::Sub),
-            Token::BinOp(2, BinOp::Mul),
-            Token::BinOp(4, BinOp::Div),
-            Token::BinOp(6, BinOp::Mod),
-            Token::BinOp(8, BinOp::Pow),
-            Token::BinOp(11, BinOp::Add),
-            Token::BinOp(13, BinOp::Equals),
-            Token::BinOp(16, BinOp::Assign),
-            Token::UnaryOp(18, UnaryOp::Not),
+            Ok(Token::BinOp(0, BinOp::Sub)),
+            Ok(Token::BinOp(2, BinOp::Mul)),
+            Ok(Token::BinOp(4, BinOp::Div)),
+            Ok(Token::BinOp(6, BinOp::Mod)),
+            Ok(Token::BinOp(8, BinOp::Pow)),
+            Ok(Token::BinOp(11, BinOp::Add)),
+            Ok(Token::BinOp(13, BinOp::Equals)),
+            Ok(Token::BinOp(16, BinOp::Assign)),
+            Ok(Token::UnaryOp(18, UnaryOp::Not)),
         ];
 
-        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
 
@@ -191,13 +199,13 @@ mod tests {
         let input = "123 123.123 \"string\" <path>";
         
         let expected = vec![
-            Token::Val(0, Val::Int(123)),
-            Token::Val(4, Val::Double(123.123)),
-            Token::Val(12, Val::String("string")),
-            Token::Val(21, Val::Path("path")),
+            Ok(Token::Val(0, Val::Int(123))),
+            Ok(Token::Val(4, Val::Double(123.123))),
+            Ok(Token::Val(12, Val::String("string"))),
+            Ok(Token::Val(21, Val::Path("path"))),
         ];
 
-        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
 
@@ -206,29 +214,29 @@ mod tests {
         let input = "let fn import set";
         
         let expected = vec![
-            Token::Keyword(0, Keyword::Let),
-            Token::Keyword(4, Keyword::Fn),
-            Token::Keyword(7, Keyword::Import),
-            Token::Keyword(14, Keyword::Set),
+            Ok(Token::Keyword(0, Keyword::Let)),
+            Ok(Token::Keyword(4, Keyword::Fn)),
+            Ok(Token::Keyword(7, Keyword::Import)),
+            Ok(Token::Keyword(14, Keyword::Set)),
         ];
 
-        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_garbage_string() {
         let input = "\"test ";
-        let expected = vec![ Token::Garbage(0, "\"test ") ];
-        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        let expected = vec![ Err(LexError::Garbage(0, "\"test ")) ];
+        let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_garbage_path() {
         let input = "<path ";
-        let expected = vec![ Token::Garbage(0, "<path ") ];
-        let actual: Vec<Token> = Tokenizer::new(input).collect();
+        let expected = vec![ Err(LexError::Garbage(0, "<path ")) ];
+        let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
 }
