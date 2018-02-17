@@ -9,6 +9,9 @@ pub enum Token<'a> {
     Id(usize, &'a str),
     GroupL(usize),
     GroupR(usize),
+    BlockL(usize),
+    BlockR(usize),
+    Comma(usize),
 }
 
 #[derive(PartialEq)]

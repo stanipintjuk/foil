@@ -26,6 +26,8 @@ pub enum LexError<'a> {
     Garbage(usize, &'a str)
 }
 
+pub type LexResult<'a> = Result<Token<'a>, LexError<'a>>;
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Tokenizer<'a> {
@@ -40,7 +42,7 @@ impl<'a> Tokenizer<'a> {
     fn char_at(&self, pos: usize) -> Option<char> {
         self.buf.chars().nth(pos)
     }
-    fn lex_assign_or_equals(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_assign_or_equals(&mut self) -> Option<LexResult<'a>> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
             token!(Token::BinOp => BinOp::Equals, self => 2)
         } else {
@@ -48,7 +50,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_mul_or_pow(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_mul_or_pow(&mut self) -> Option<LexResult<'a>> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
             token!(Token::BinOp => BinOp::Pow, self => 2)
         } else {
@@ -56,7 +58,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_strlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_strlit(&mut self) -> Option<LexResult<'a>> {
         let matched = match_string(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -68,7 +70,7 @@ impl<'a> Tokenizer<'a> {
         token!(Token::Val => Val::String(mstr), self => matched.end())
     }
 
-    fn lex_pathlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_pathlit(&mut self) -> Option<LexResult<'a>> {
         let matched = match_path(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -80,7 +82,7 @@ impl<'a> Tokenizer<'a> {
         token!(Token::Val => Val::Path(mstr), self => matched.end())
     }
 
-    fn lex_bareword(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_bareword(&mut self) -> Option<LexResult<'a>> {
         let matched = match_bare_word(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -98,7 +100,7 @@ impl<'a> Tokenizer<'a> {
         
     }
 
-    fn lex_numlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
+    fn lex_numlit(&mut self) -> Option<LexResult<'a>> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
             token!(Token::Val => Val::Double(d), self => mdouble.end())
@@ -112,14 +114,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn garbage(&mut self) -> Result<Token<'a>, LexError<'a>> {
+    fn garbage(&mut self) -> LexResult<'a> {
         let err = LexError::Garbage(self.pos, &self.buf[self.pos..]);
         self.pos = self.buf.len();
         Err(err)
     }
 }
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = Result<Token<'a>, LexError<'a>>;
+    type Item = LexResult<'a>;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(end) = end_of_whitespace(&self.buf[self.pos..]) {
                 self.pos += end;
@@ -140,13 +142,16 @@ impl<'a> Iterator for Tokenizer<'a> {
             '!' => token!(Token::UnaryOp => UnaryOp::Not, self=>1),
             '(' => token!(Token::GroupL, self=>1),
             ')' => token!(Token::GroupR, self=>1),
+            '{' => token!(Token::BlockL, self=>1),
+            '}' => token!(Token::BlockR, self=>1),
+            ',' => token!(Token::Comma, self=>1),
             '=' => self.lex_assign_or_equals(),
             '*' => self.lex_mul_or_pow(),
             '"' => self.lex_strlit(),
             '<' => self.lex_pathlit(),
             x if x.is_alphabetic() => self.lex_bareword(),
             x if x.is_numeric() => self.lex_numlit(),
-            x => Some(self.garbage()),
+            _ => Some(self.garbage()),
         }
     }
 }
@@ -232,6 +237,32 @@ mod tests {
             Ok(Token::Val(4, Val::Int(12))),
             Ok(Token::GroupR(7)),
             Ok(Token::GroupR(8)),
+        ];
+
+        let actual: Vec<_> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_block_parens() {
+        let input = "{ { 12 }}";
+        let expected = vec![
+            Ok(Token::BlockL(0)),
+            Ok(Token::BlockL(2)),
+            Ok(Token::Val(4, Val::Int(12))),
+            Ok(Token::BlockR(7)),
+            Ok(Token::BlockR(8)),
+        ];
+
+        let actual: Vec<_> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_comma() {
+        let input = ", ";
+        let expected = vec![
+            Ok(Token::Comma(0)),
         ];
 
         let actual: Vec<_> = Tokenizer::new(input).collect();
