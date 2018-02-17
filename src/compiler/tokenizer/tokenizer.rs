@@ -1,6 +1,23 @@
 use super::tokens::*;
 use super::regex::*;
 
+// Convinient way to return a token and move the lexer position forwards.
+// Example:
+// token!(Token::BinOp => BinOp::Add, lexer=>1)
+// Means "Create a token of type BinOp and of variant 'Add', and then move the lexer pointer 1 step"
+macro_rules! token {
+    ( $token:expr => $sub_token:expr, $lexer:expr => $size:expr) => {{
+        let result = Some(Ok($token($lexer.pos, $sub_token)));
+        $lexer.pos += $size;
+        return result;
+    }};
+
+    ( $token:expr, $lexer:expr => $size:expr ) => {{
+        let result = Some(Ok($token($lexer.pos)));
+        $lexer.pos += $size;
+        return result;
+    }};
+}
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -24,28 +41,18 @@ impl<'a> Tokenizer<'a> {
         self.buf.chars().nth(pos)
     }
     fn lex_assign_or_equals(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
-        if (self.char_at(self.pos), 
-            self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
-                let result = Some(Ok(Token::BinOp(self.pos, BinOp::Equals)));
-                self.pos += 2;
-                return result;
+        if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
+            token!(Token::BinOp => BinOp::Equals, self => 2)
         } else {
-            let result = Some(Ok(Token::BinOp(self.pos, BinOp::Assign)));
-            self.pos += 1;
-            return result;
+            token!(Token::BinOp => BinOp::Assign, self => 1)
         }
     }
 
     fn lex_mul_or_pow(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
-        if (self.char_at(self.pos), 
-            self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
-                let result = Some(Ok(Token::BinOp(self.pos, BinOp::Pow)));
-                self.pos += 2;
-                return result;
+        if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
+            token!(Token::BinOp => BinOp::Pow, self => 2)
         } else {
-            let result = Some(Ok(Token::BinOp(self.pos, BinOp::Mul)));
-            self.pos += 1;
-            return result;
+            token!(Token::BinOp => BinOp::Mul, self => 1)
         }
     }
 
@@ -58,9 +65,7 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        let result = Some(Ok(Token::Val(self.pos, Val::String(mstr))));
-        self.pos += matched.end();
-        return result;
+        token!(Token::Val => Val::String(mstr), self => matched.end())
     }
 
     fn lex_pathlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
@@ -72,9 +77,7 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        let result = Some(Ok(Token::Val(self.pos, Val::Path(mstr))));
-        self.pos += matched.end();
-        return result;
+        token!(Token::Val => Val::Path(mstr), self => matched.end())
     }
 
     fn lex_bareword(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
@@ -98,20 +101,17 @@ impl<'a> Tokenizer<'a> {
     fn lex_numlit(&mut self) -> Option<Result<Token<'a>, LexError<'a>>> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
-            let result = Some(Ok(Token::Val(self.pos, Val::Double(d))));
-            self.pos += mdouble.end();
-            return result;
+            token!(Token::Val => Val::Double(d), self => mdouble.end())
 
         } else if let Some(mint) = match_int(&self.buf[self.pos..]) {
             let i = mint.as_str().parse::<i64>().unwrap();
-            let result = Some(Ok(Token::Val(self.pos, Val::Int(i))));
-            self.pos += mint.end();
-            return result;
+            token!(Token::Val => Val::Int(i), self => mint.end())
 
         } else {
             Some(self.garbage())
         }
     }
+
     fn garbage(&mut self) -> Result<Token<'a>, LexError<'a>> {
         let err = LexError::Garbage(self.pos, &self.buf[self.pos..]);
         self.pos = self.buf.len();
@@ -133,38 +133,20 @@ impl<'a> Iterator for Tokenizer<'a> {
         }
         let current_char = current_char.unwrap();
         match current_char {
-            '+' => {
-                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Add)));
-                self.pos += 1;
-                return res;
-            },
-            '-' => {
-                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Sub)));
-                self.pos += 1;
-                return res;
-            },
-            '/' => {
-                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Div)));
-                self.pos += 1;
-                return res;
-            },
-            '%' => {
-                let res = Some(Ok(Token::BinOp(self.pos, BinOp::Mod)));
-                self.pos += 1;
-                return res;
-            },
-            '!' => {
-                let res = Some(Ok(Token::UnaryOp(self.pos, UnaryOp::Not)));
-                self.pos += 1;
-                return res;
-            },
+            '+' => token!(Token::BinOp => BinOp::Add, self=>1),
+            '-' => token!(Token::BinOp => BinOp::Sub, self=>1),
+            '/' => token!(Token::BinOp => BinOp::Div, self=>1),
+            '%' => token!(Token::BinOp => BinOp::Mod, self=>1),
+            '!' => token!(Token::UnaryOp => UnaryOp::Not, self=>1),
+            '(' => token!(Token::GroupL, self=>1),
+            ')' => token!(Token::GroupR, self=>1),
             '=' => self.lex_assign_or_equals(),
             '*' => self.lex_mul_or_pow(),
             '"' => self.lex_strlit(),
             '<' => self.lex_pathlit(),
             x if x.is_alphabetic() => self.lex_bareword(),
             x if x.is_numeric() => self.lex_numlit(),
-            _ => None,
+            x => Some(self.garbage()),
         }
     }
 }
@@ -237,6 +219,21 @@ mod tests {
     fn test_garbage_path() {
         let input = "<path ";
         let expected = vec![ Err(LexError::Garbage(0, "<path ")) ];
+        let actual: Vec<_> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_parens() {
+        let input = "( ( 12 ))";
+        let expected = vec![
+            Ok(Token::GroupL(0)),
+            Ok(Token::GroupL(2)),
+            Ok(Token::Val(4, Val::Int(12))),
+            Ok(Token::GroupR(7)),
+            Ok(Token::GroupR(8)),
+        ];
+
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
