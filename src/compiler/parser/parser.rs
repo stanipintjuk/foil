@@ -16,6 +16,20 @@ macro_rules! expect_expression {
     }
 }
 
+macro_rules! next_token {
+    ( $lexer:expr, $pos:expr ) => {
+        match $lexer.next() {
+            Some(Ok(token)) => token,
+            Some(Err(err)) => {
+                return Some(Err(ParseError::Lexer(err)));
+            }
+            None => {
+                return Some(Err(ParseError::UnexpectedEndOfCode($pos)));
+            }
+        }
+    }
+}
+
 type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> + 'i;
 
 #[derive(PartialEq)]
@@ -23,10 +37,8 @@ type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> 
 pub enum ParseError<'s> {
     Unexpected(Token<'s>),
     ExpectedExpression(usize),
-    UnexpectedKeyword(usize, Keyword),
     Lexer(LexError<'s>),
     ExpectedGroupL(Token<'s>),
-    ExpectedSetField(usize),
     ExpectedSetFieldName(Token<'s>),
     UnexpectedEndOfCode(usize),
     ExpectedAssignment(Token<'s>),
@@ -78,15 +90,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
 
     fn parse_set(&mut self, pos: usize) -> Option<ParseResult<'s>> {
         // Get the token
-        let token = match self.token_iter.next() {
-            Some(Ok(token)) => token,
-            Some(Err(err)) => {
-                return Some(Err(ParseError::Lexer(err)))
-            },
-            None => {
-                return Some(Err(ParseError::UnexpectedEndOfCode(pos)))
-            },
-        };
+        let token = next_token!(self.token_iter, pos);
 
         // All sets need to start with '{'
         // So expect GroupL
@@ -113,15 +117,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
             };
 
             // Get the token
-            let token = match self.token_iter.next() {
-                Some(Ok(token)) => token,
-                Some(Err(err)) => {
-                    return Some(Err(ParseError::Lexer(err)))
-                },
-                None => {
-                    return Some(Err(ParseError::UnexpectedEndOfCode(pos)))
-                },
-            };
+            let token = next_token!(self.token_iter, pos);
 
             // Expect comma between set fields
             // Or if BlockR is found then stop looking for fields
@@ -140,15 +136,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
 
     fn parse_set_field(&mut self, pos: usize) -> Option<Result<SetField<'s>, ParseError<'s>>> {
         // Get the token
-        let token = match self.token_iter.next() {
-            Some(Ok(token)) => token,
-            Some(Err(err)) => {
-                return Some(Err(ParseError::Lexer(err)))
-            },
-            None => {
-                return Some(Err(ParseError::UnexpectedEndOfCode(pos)))
-            },
-        };
+        let token = next_token!(self.token_iter, pos);
 
         // Expect the token to be an Id,
         // or return None if '}' is encountered.
@@ -166,15 +154,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         };
         
 
-        let token = match self.token_iter.next() {
-            Some(Ok(token)) => token,
-            Some(Err(err)) => {
-                return Some(Err(ParseError::Lexer(err)))
-            },
-            None => {
-                return Some(Err(ParseError::UnexpectedEndOfCode(pos)))
-            },
-        };
+        let token = next_token!(self.token_iter, pos);
 
         // Expect next token to be '='
         let pos =  match token {
@@ -325,6 +305,5 @@ mod tests {
         let mut iter = input.iter().map(Clone::clone);
         let actual: Vec<_> = Parser::new(&mut iter).collect();
         assert_eq!(expected, actual);
-
     }
 }
