@@ -91,16 +91,18 @@ pub enum ParseError<'s> {
     ExpectedAssignment(Token<'s>),
     ExpectedComma(Token<'s>),
     UnexpectedKeyword(Keyword),
-    ExpectedKeyword(Keyword, Token<'s>)
+    ExpectedKeyword(Keyword, Token<'s>),
+    ExpectedPath(Token<'s>),
+    ExpectedColon(Token<'s>),
 }
 
 type ParseResult<'s> = Result<Ast<'s>, ParseError<'s>>;
-struct Parser<'i, 's: 'i> {
+pub struct Parser<'i, 's: 'i> {
     token_iter: &'i mut TokenIterator<'i, 's>,
 }
 impl<'i, 's: 'i> Parser<'i, 's> {
 
-    fn new(token_iter: &'i mut TokenIterator<'i, 's>) -> Self {
+    pub fn new(token_iter: &'i mut TokenIterator<'i, 's>) -> Self {
         Parser{token_iter: token_iter}
     }
 
@@ -143,11 +145,31 @@ impl<'i, 's: 'i> Parser<'i, 's> {
     }
 
     fn parse_fn(&mut self, pos: usize) -> Option<ParseResult<'s>> {
-        unimplemented!()
+        let (pos, arg_name) = expect_id!(self.token_iter, pos);
+        let token = next_token!(self.token_iter, pos);
+
+        let pos = match token {
+            Token::Colon(pos) => pos,
+            token => {
+                return Some(Err(ParseError::ExpectedColon(token)));
+            }
+        };
+
+        let expr = expect_expression!(self, pos);
+        
+        all_ok(Ast::Fn(arg_name, Box::new(expr)))
     }
 
     fn parse_import(&mut self, pos: usize) -> Option<ParseResult<'s>> {
-        unimplemented!()
+        let token = next_token!(self.token_iter, pos);
+        match token {
+            Token::Val(pos, Val::Path(path)) => {
+                Some(Ok(Ast::Import(pos, path)))
+            },
+            token => {
+                Some(Err(ParseError::ExpectedPath(token)))
+            }
+        }
     }
 
     fn parse_set(&mut self, pos: usize) -> Option<ParseResult<'s>> {
@@ -233,155 +255,3 @@ impl<'i, 's: 'i> Iterator for Parser<'i, 's> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use compiler::tokens::*;
-    use super::super::ast::*;
-
-    #[test]
-    fn parse_binary_op_test() {
-        let input = vec![
-            Ok(Token::BinOp(0, BinOp::Add)),
-            Ok(Token::Val(0, Val::Int(3))),
-            Ok(Token::Val(0, Val::Int(4))),
-        ];
-
-        let expected = vec![
-            Ok(Ast::BinOp(
-                    BinOp::Add, 
-                    Box::new(Ast::Val(Val::Int(3))),
-                    Box::new(Ast::Val(Val::Int(4)))
-                    ))
-        ];
-
-        let mut iter = input.iter().map(Clone::clone);
-        let actual: Vec<_> = Parser::new(&mut iter).collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn parse_nested_binary_op_test() {
-        // "+ - 1 2 3"
-        let input = vec![
-            Ok(Token::BinOp(0, BinOp::Add)),
-            Ok(Token::BinOp(0, BinOp::Sub)),
-            Ok(Token::Val(0, Val::Int(1))),
-            Ok(Token::Val(0, Val::Int(2))),
-            Ok(Token::Val(0, Val::Int(3))),
-        ];
-
-        let expected = vec![
-            Ok(Ast::BinOp(
-                    BinOp::Add,
-                    Box::new(Ast::BinOp(
-                            BinOp::Sub,
-                            Box::new(Ast::Val(Val::Int(1))),
-                            Box::new(Ast::Val(Val::Int(2))))),
-                    Box::new(Ast::Val(Val::Int(3)))))
-        ];
-
-        let mut iter = input.iter().map(Clone::clone);
-        let actual: Vec<_> = Parser::new(&mut iter).collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn parse_nested_binary_op_second_order() {
-        // + 1 - 2 3
-        let input = vec![
-            Ok(Token::BinOp(0, BinOp::Add)),
-            Ok(Token::Val(0, Val::Int(1))),
-            Ok(Token::BinOp(0, BinOp::Sub)),
-            Ok(Token::Val(0, Val::Int(2))),
-            Ok(Token::Val(0, Val::Int(3))),
-        ];
-
-        let expected = vec![
-            Ok(Ast::BinOp(
-                    BinOp::Add,
-                    Box::new(Ast::Val(Val::Int(1))),
-                    Box::new(Ast::BinOp(
-                            BinOp::Sub,
-                            Box::new(Ast::Val(Val::Int(2))),
-                            Box::new(Ast::Val(Val::Int(3)))))))
-        ];
-
-        let mut iter = input.iter().map(Clone::clone);
-        let actual: Vec<_> = Parser::new(&mut iter).collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_set_construction() {
-        /*
-         * set { field1="value", field2=23}
-         * */
-        
-        let input = vec![
-            Ok(Token::Keyword(0, Keyword::Set)),
-            Ok(Token::BlockL(0)),
-            Ok(Token::Id(0, "field1")),
-            Ok(Token::BinOp(0, BinOp::Assign)),
-            Ok(Token::Val(0, Val::String("value"))),
-            Ok(Token::Comma(0)),
-            Ok(Token::Id(0, "field2")),
-            Ok(Token::BinOp(0, BinOp::Assign)),
-            Ok(Token::Val(0, Val::Int(23))),
-            Ok(Token::BlockR(0))
-        ];
-
-        let expected = vec![
-            Ok(Ast::Set( vec![ 
-                    SetField { 
-                        name: "field1",
-                        value: Ast::Val(Val::String("value"))
-                    },
-                    SetField { 
-                        name: "field2",
-                        value: Ast::Val(Val::Int(23))
-                    },
-            ]))
-        ];
-
-        let mut iter = input.iter().map(Clone::clone);
-        let actual: Vec<_> = Parser::new(&mut iter).collect();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn parse_let_test() {
-        /*
-         * Test this expression
-         * let x = 2 in + x 1
-         * */
-
-        let input = vec![
-            Ok(Token::Keyword(0, Keyword::Let)),
-            Ok(Token::Id(0, "x")),
-            Ok(Token::BinOp(0, BinOp::Assign)),
-            Ok(Token::Val(0, Val::Int(2))),
-            Ok(Token::Keyword(0, Keyword::In)),
-            Ok(Token::BinOp(0, BinOp::Add)),
-            Ok(Token::Id(0, "x")),
-            Ok(Token::Val(0, Val::Int(1))),
-        ];
-
-        let expected = vec![
-            Ok(Ast::Let(
-                    Box::new(
-                        SetField {
-                            name: "x",
-                            value: Ast::Val(Val::Int(2))
-                    }),
-                    Box::new(Ast::BinOp(
-                            BinOp::Add,
-                            Box::new(Ast::Id(0, "x")),
-                            Box::new(Ast::Val(Val::Int(1)))))))
-        ];
-
-        let mut iter = input.iter().map(Clone::clone);
-        let actual: Vec<_> = Parser::new(&mut iter).collect();
-        assert_eq!(expected, actual);
-    }
-}

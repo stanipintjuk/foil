@@ -8,6 +8,8 @@ pub enum Ast<'a> {
     Set(Set<'a>),
     Let(Box<SetField<'a>>, Box<Ast<'a>>),
     Id(usize, &'a str),
+    Import(usize, &'a str),
+    Fn(&'a str, Box<Ast<'a>>),
 }
 
 pub type Set<'a> = Vec<SetField<'a>>;

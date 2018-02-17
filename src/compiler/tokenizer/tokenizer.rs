@@ -145,6 +145,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '{' => token!(Token::BlockL, self=>1),
             '}' => token!(Token::BlockR, self=>1),
             ',' => token!(Token::Comma, self=>1),
+            ':' => token!(Token::Colon, self=>1),
             '=' => self.lex_assign_or_equals(),
             '*' => self.lex_mul_or_pow(),
             '"' => self.lex_strlit(),
@@ -259,10 +260,11 @@ mod tests {
     }
 
     #[test]
-    fn test_comma() {
-        let input = ", ";
+    fn test_punctuation() {
+        let input = ", :";
         let expected = vec![
             Ok(Token::Comma(0)),
+            Ok(Token::Colon(2)),
         ];
 
         let actual: Vec<_> = Tokenizer::new(input).collect();

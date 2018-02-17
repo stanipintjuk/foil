@@ -12,6 +12,7 @@ pub enum Token<'a> {
     BlockL(usize),
     BlockR(usize),
     Comma(usize),
+    Colon(usize),
 }
 
 #[derive(PartialEq)]
