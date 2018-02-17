@@ -5,8 +5,12 @@ use compiler::tokens::*;
 pub enum Ast<'a> {
     BinOp(BinOp, Box<Ast<'a>>, Box<Ast<'a>>),
     Val(Val<'a>),
-    Set(Vec<SetField<'a>>)
+    Set(Set<'a>),
+    Let(Box<SetField<'a>>, Box<Ast<'a>>),
+    Id(usize, &'a str),
 }
+
+pub type Set<'a> = Vec<SetField<'a>>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]

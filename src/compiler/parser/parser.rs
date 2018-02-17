@@ -1,3 +1,4 @@
+use helpers::*;
 use compiler::tokens::*;
 use compiler::lexer::{LexError, LexResult};
 use super::ast::*;
@@ -30,6 +31,52 @@ macro_rules! next_token {
     }
 }
 
+macro_rules! expect_assignment {
+    ( $lexer:expr, $pos:expr ) => {{
+        let token = next_token!($lexer, $pos);
+        let pos = match token {
+            Token::BinOp(pos, BinOp::Assign) => { pos },
+            token => {
+                return Some(Err(ParseError::ExpectedAssignment(token)));
+            }
+        };
+        pos
+    }}
+}
+
+macro_rules! expect_keyword {
+    ($keyword:expr, $lexer:expr, $pos:expr) => {{
+        let token = next_token!($lexer, $pos);
+        let pos = match token {
+            Token::Keyword(pos, keyword) => { 
+                if keyword == $keyword {
+                    pos 
+                } else {
+                    return Some(Err(
+                            ParseError::ExpectedKeyword($keyword, 
+                                                        Token::Keyword(pos, keyword))));
+                }
+            },
+            token => {
+                return Some(Err(ParseError::ExpectedKeyword($keyword, token)));
+            }
+        };
+        pos
+    }}
+}
+
+macro_rules! expect_id {
+    ($lexer:expr, $pos:expr) => {{
+        let token = next_token!($lexer, $pos);
+        match token {
+            Token::Id(pos, name) => (pos, name),
+            token => { 
+                return Some(Err(ParseError::ExpectedId(token)));
+            }
+        }
+    }}
+}
+
 type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> + 'i;
 
 #[derive(PartialEq)]
@@ -39,10 +86,12 @@ pub enum ParseError<'s> {
     ExpectedExpression(usize),
     Lexer(LexError<'s>),
     ExpectedGroupL(Token<'s>),
-    ExpectedSetFieldName(Token<'s>),
+    ExpectedId(Token<'s>),
     UnexpectedEndOfCode(usize),
     ExpectedAssignment(Token<'s>),
     ExpectedComma(Token<'s>),
+    UnexpectedKeyword(Keyword),
+    ExpectedKeyword(Keyword, Token<'s>)
 }
 
 type ParseResult<'s> = Result<Ast<'s>, ParseError<'s>>;
@@ -73,11 +122,24 @@ impl<'i, 's: 'i> Parser<'i, 's> {
             Keyword::Fn => self.parse_fn(pos),
             Keyword::Import => self.parse_import(pos),
             Keyword::Set => self.parse_set(pos),
+            Keyword::In => Some(Err(ParseError::UnexpectedKeyword(Keyword::In))),
         }
     }
 
     fn parse_let(&mut self, pos: usize) -> Option<ParseResult<'s>> {
-        unimplemented!()
+        let (pos, id_name) = expect_id!(self.token_iter, pos);
+        let pos = expect_assignment!(self.token_iter, pos);
+        let value = expect_expression!(self, pos);
+        let pos = expect_keyword!(Keyword::In, self.token_iter, pos);
+        let expr = expect_expression!(self, pos);
+        all_ok(
+            Ast::Let(
+                Box::new(SetField {
+                    name: id_name,
+                    value: value
+                }),
+                Box::new(expr)))
+
     }
 
     fn parse_fn(&mut self, pos: usize) -> Option<ParseResult<'s>> {
@@ -135,45 +197,25 @@ impl<'i, 's: 'i> Parser<'i, 's> {
     }
 
     fn parse_set_field(&mut self, pos: usize) -> Option<Result<SetField<'s>, ParseError<'s>>> {
-        // Get the token
-        let token = next_token!(self.token_iter, pos);
 
-        // Expect the token to be an Id,
-        // or return None if '}' is encountered.
-        let (pos, field_name) = match token {
-            Token::Id(pos, name) => {
-                (pos, name)
-            },
-            Token::BlockR(_) => {
-                return None;
-            },
-            token => {
-                return Some(
-                    Err(ParseError::ExpectedSetFieldName(token)));
-            }
-        };
-        
-
-        let token = next_token!(self.token_iter, pos);
+        // Expect an id token
+        let (pos, field_name) = expect_id!(self.token_iter, pos);
 
         // Expect next token to be '='
-        let pos =  match token {
-            Token::BinOp(pos, BinOp::Assign) => { pos },
-            token => {
-                return Some(Err(ParseError::ExpectedAssignment(token)));
-            }
-        };
+        let pos = expect_assignment!(self.token_iter, pos);
 
-        let expr = expect_expression!(self, pos);
+        // And let the value be any kind of expression
+        let value = expect_expression!(self, pos);
 
-        return Some(Ok(SetField { name: field_name, value: expr }));
+        return Some(Ok(SetField { name: field_name, value: value }));
     }
 
     fn parse_token(&mut self, token: LexResult<'s>) -> Option<ParseResult<'s>> {
         match token {
             Ok(Token::BinOp(pos, op)) => self.parse_bin_op(op, pos),
-            Ok(Token::Val(_, val)) => Some(Ok(Ast::Val(val))),
+            Ok(Token::Val(_, val)) => all_ok(Ast::Val(val)),
             Ok(Token::Keyword(pos, keyword)) => self.parse_keyword(keyword, pos),
+            Ok(Token::Id(pos, name)) => all_ok(Ast::Id(pos, name)),
             Ok(t) => Some(Err(ParseError::Unexpected(t))),
             Err(err) => Some(Err(ParseError::Lexer(err))),
         }
@@ -300,6 +342,42 @@ mod tests {
                         value: Ast::Val(Val::Int(23))
                     },
             ]))
+        ];
+
+        let mut iter = input.iter().map(Clone::clone);
+        let actual: Vec<_> = Parser::new(&mut iter).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn parse_let_test() {
+        /*
+         * Test this expression
+         * let x = 2 in + x 1
+         * */
+
+        let input = vec![
+            Ok(Token::Keyword(0, Keyword::Let)),
+            Ok(Token::Id(0, "x")),
+            Ok(Token::BinOp(0, BinOp::Assign)),
+            Ok(Token::Val(0, Val::Int(2))),
+            Ok(Token::Keyword(0, Keyword::In)),
+            Ok(Token::BinOp(0, BinOp::Add)),
+            Ok(Token::Id(0, "x")),
+            Ok(Token::Val(0, Val::Int(1))),
+        ];
+
+        let expected = vec![
+            Ok(Ast::Let(
+                    Box::new(
+                        SetField {
+                            name: "x",
+                            value: Ast::Val(Val::Int(2))
+                    }),
+                    Box::new(Ast::BinOp(
+                            BinOp::Add,
+                            Box::new(Ast::Id(0, "x")),
+                            Box::new(Ast::Val(Val::Int(1)))))))
         ];
 
         let mut iter = input.iter().map(Clone::clone);
