@@ -4,6 +4,7 @@ use super::regex::*;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum LexError<'a> {
     Garbage(usize, &'a str)
 }

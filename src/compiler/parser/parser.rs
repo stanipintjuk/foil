@@ -1,13 +1,15 @@
 use compiler::tokens::*;
+use compiler::lexer::{LexError};
 use super::ast::*;
 
-type TokenIterator<'i, 's: 'i> = Iterator<Item=Token<'s>> + 'i;
+type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> + 'i;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub enum ParseError<'s> {
     Unexpected(Token<'s>),
     ExpectedExpression,
+    Lexer(LexError<'s>),
 }
 
 struct Parser<'i, 's: 'i> {
@@ -53,9 +55,10 @@ impl<'i, 's: 'i> Iterator for Parser<'i, 's> {
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(token) = self.token_iter.next() {
             match token {
-                Token::BinOp(_, op) => self.parse_bin_op(op),
-                Token::Val(_, val) => Some(Ok(Ast::Val(val))),
-                t => Some(Err(ParseError::Unexpected(t))),
+                Ok(Token::BinOp(_, op)) => self.parse_bin_op(op),
+                Ok(Token::Val(_, val)) => Some(Ok(Ast::Val(val))),
+                Ok(t) => Some(Err(ParseError::Unexpected(t))),
+                Err(err) => Some(Err(ParseError::Lexer(err))),
             }
         } else {
             None
@@ -72,17 +75,17 @@ mod tests {
     #[test]
     fn parse_binary_op_test() {
         let input = vec![
-            Token::BinOp(0, BinOp::Add),
-            Token::Val(0, Val::Int(3)),
-            Token::Val(0, Val::Int(4)),
+            Ok(Token::BinOp(0, BinOp::Add)),
+            Ok(Token::Val(0, Val::Int(3))),
+            Ok(Token::Val(0, Val::Int(4))),
         ];
 
         let expected = vec![
             Ok(Ast::BinOp(
-                BinOp::Add, 
-                Box::new(Ast::Val(Val::Int(3))),
-                Box::new(Ast::Val(Val::Int(4)))
-                ))
+                    BinOp::Add, 
+                    Box::new(Ast::Val(Val::Int(3))),
+                    Box::new(Ast::Val(Val::Int(4)))
+                    ))
         ];
 
         let iter = input.iter();
@@ -94,11 +97,11 @@ mod tests {
     #[test]
     fn parse_nested_binary_op_test() {
         let input = vec![
-            Token::BinOp(0, BinOp::Add),
-            Token::BinOp(0, BinOp::Sub),
-            Token::Val(0, Val::Int(1)),
-            Token::Val(0, Val::Int(2)),
-            Token::Val(0, Val::Int(3)),
+            Ok(Token::BinOp(0, BinOp::Add)),
+            Ok(Token::BinOp(0, BinOp::Sub)),
+            Ok(Token::Val(0, Val::Int(1))),
+            Ok(Token::Val(0, Val::Int(2))),
+            Ok(Token::Val(0, Val::Int(3))),
         ];
 
         let expected = vec![
@@ -108,7 +111,7 @@ mod tests {
                             BinOp::Sub,
                             Box::new(Ast::Val(Val::Int(1))),
                             Box::new(Ast::Val(Val::Int(2))))),
-                    Box::new(Ast::Val(Val::Int(3)))))
+                            Box::new(Ast::Val(Val::Int(3)))))
         ];
 
         let mut iter = input.iter().map(Clone::clone);
