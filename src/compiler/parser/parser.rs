@@ -77,6 +77,18 @@ macro_rules! expect_id {
     }}
 }
 
+macro_rules! expect_group_r {
+    ($lexer:expr, $pos:expr) => {{
+        let token = next_token!($lexer, $pos);
+        match token {
+            Token::GroupR(pos) => pos,
+            token => { 
+                return Some(Err(ParseError::ExpectedGroupR(token)));
+            }
+        }
+    }}
+}
+
 type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> + 'i;
 
 #[derive(PartialEq)]
@@ -94,6 +106,7 @@ pub enum ParseError<'s> {
     ExpectedKeyword(Keyword, Token<'s>),
     ExpectedPath(Token<'s>),
     ExpectedColon(Token<'s>),
+    ExpectedGroupR(Token<'s>),
 }
 
 type ParseResult<'s> = Result<Ast<'s>, ParseError<'s>>;
@@ -232,12 +245,22 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         return Some(Ok(SetField { name: field_name, value: value }));
     }
 
+    fn parse_fn_call(&mut self, pos: usize) -> Option<ParseResult<'s>> {
+        let (id_pos, id_name) = expect_id!(self.token_iter, pos);
+        let param = expect_expression!(self, id_pos);
+        expect_group_r!(self.token_iter, pos);
+        all_ok(Ast::Call(
+                Id(id_pos, id_name),
+                Box::new(param)))
+    }
+
     fn parse_token(&mut self, token: LexResult<'s>) -> Option<ParseResult<'s>> {
         match token {
             Ok(Token::BinOp(pos, op)) => self.parse_bin_op(op, pos),
             Ok(Token::Val(_, val)) => all_ok(Ast::Val(val)),
             Ok(Token::Keyword(pos, keyword)) => self.parse_keyword(keyword, pos),
-            Ok(Token::Id(pos, name)) => all_ok(Ast::Id(pos, name)),
+            Ok(Token::Id(pos, name)) => all_ok(Ast::Id(Id(pos, name))),
+            Ok(Token::GroupL(pos)) => self.parse_fn_call(pos),
             Ok(t) => Some(Err(ParseError::Unexpected(t))),
             Err(err) => Some(Err(ParseError::Lexer(err))),
         }

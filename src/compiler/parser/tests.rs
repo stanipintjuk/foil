@@ -139,7 +139,7 @@ fn parse_let_test() {
                     }),
                     Box::new(Ast::BinOp(
                             BinOp::Add,
-                            Box::new(Ast::Id(0, "x")),
+                            Box::new(Ast::Id(Id(0, "x"))),
                             Box::new(Ast::Val(Val::Int(1)))))))
     ];
 
@@ -181,11 +181,35 @@ fn parse_fn_test() {
     let expected = vec![
         Ok(Ast::Fn("x", 
                    Box::new(Ast::BinOp(BinOp::Add,
-                                       Box::new(Ast::Id(8, "x")),
+                                       Box::new(Ast::Id(Id(8, "x"))),
                                        Box::new(Ast::Val(Val::Int(1)))))))
     ];
 
     let mut iter = input.iter().map(Clone::clone);
     let actual: Vec<_> = Parser::new(&mut iter).collect();
     assert_eq!(expected, actual);
+}
+
+#[test]
+fn parse_function_call() {
+    // (myFunc "test")
+    let input = vec![
+        Ok(Token::GroupL(0)),
+        Ok(Token::Id(1, "myFunc")),
+        Ok(Token::Val(8, Val::String("test"))),
+        Ok(Token::GroupR(14))
+    ];
+
+    let expected = vec![
+        Ok(Ast::Call(
+                Id(1, "myFunc"),
+                Box::new(Ast::Val(Val::String("test")))
+                )
+            )
+    ];
+
+    let mut iter = input.iter().map(Clone::clone);
+    let actual: Vec<_> = Parser::new(&mut iter).collect();
+    assert_eq!(expected, actual);
+
 }
