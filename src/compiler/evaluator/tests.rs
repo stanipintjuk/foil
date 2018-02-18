@@ -1,6 +1,7 @@
-use super::evaluator::{Evaluatable, Output};
+use super::evaluator::{Evaluator, Output, Scope};
 use compiler::parser::ast::{Ast, SetField, Id};
 use compiler::tokens::{Val, BinOp};
+use std::collections::LinkedList;
 
 #[test]
 fn test_execute_binary_op() {
@@ -14,7 +15,8 @@ fn test_execute_binary_op() {
 
     let expected = Ok(Output::Int(7));
 
-    let actual = input.evaluate();
+    let scope = Scope::new();
+    let actual = Evaluator::new(&input, &scope).eval();
     assert_eq!(expected, actual);
 }
 
@@ -30,7 +32,8 @@ fn test_execute_recursive() {
                 Box::new(Ast::Val(Val::Int(2))))),
                 Box::new(Ast::Val(Val::Int(3))));
     let expected = Ok(Output::Int(2));
-    let actual = input.evaluate();
+    let scope = Scope::new();
+    let actual = Evaluator::new(&input, &scope).eval();
     assert_eq!(expected, actual);
 }
 
@@ -50,7 +53,8 @@ fn test_execute_let_statement() {
                         Box::new(Ast::Val(Val::Int(1))))));
 
     let expected = Ok(Output::Int(3));
-    let actual = input.evaluate();
+    let scope = Scope::new();
+    let actual = Evaluator::new(&input, &scope).eval();
     assert_eq!(expected, actual);
 }
 
