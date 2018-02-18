@@ -1,5 +1,12 @@
-use super::tokens::*;
-use super::regex::*;
+use super::tokens::{Token, BinOp, UnaryOp, Val, Keyword};
+use super::regex::{
+    end_of_whitespace,
+    match_bare_word,
+    match_double,
+    match_int,
+    match_string,
+    match_path
+};
 
 // Convinient way to return a token and move the lexer position forwards.
 // Example:
