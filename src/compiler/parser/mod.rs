@@ -1,6 +1,6 @@
 #[macro_use] mod macros;
 mod parser;
-mod ast;
+pub mod ast;
 mod types;
 
 #[cfg(test)] mod tests;
