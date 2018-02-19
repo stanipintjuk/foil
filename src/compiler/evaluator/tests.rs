@@ -1,4 +1,6 @@
-use super::evaluator::{Evaluator, Output, Scope};
+use super::evaluator::Evaluator;
+use super::output::Output;
+use super::scope::Scope;
 use compiler::parser::ast::{Ast, SetField, Id};
 use compiler::tokens::{Val, BinOp};
 use std::collections::LinkedList;
@@ -51,6 +53,67 @@ fn test_execute_let_statement() {
                         BinOp::Add,
                         Box::new(Ast::Id(Id(0, "x"))),
                         Box::new(Ast::Val(Val::Int(1))))));
+
+    let expected = Ok(Output::Int(3));
+    let scope = Scope::new();
+    let actual = Evaluator::new(&input, &scope).eval();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn test_nested_let() {
+    // let x = 1 in let y = 2 in + x y
+    
+    let inner = 
+        Ast::Let(
+            Box::new(
+                SetField {
+                    name: "y",
+                    value: Ast::Val(Val::Int(2))
+                }),
+                Box::new(Ast::BinOp(
+                        BinOp::Add,
+                        Box::new(Ast::Id(Id(0, "x"))),
+                        Box::new(Ast::Id(Id(0, "y"))))));
+    let input = 
+        Ast::Let(
+            Box::new(
+                SetField {
+                    name: "x",
+                    value: Ast::Val(Val::Int(1))
+                }),
+                Box::new(inner));
+
+    let expected = Ok(Output::Int(3));
+    let scope = Scope::new();
+    let actual = Evaluator::new(&input, &scope).eval();
+    assert_eq!(expected, actual);
+}
+
+
+#[test]
+fn test_shadowing_works() {
+    // let x = 1 in let x = 2 in + x 1
+    
+    let inner = 
+        Ast::Let(
+            Box::new(
+                SetField {
+                    name: "x",
+                    value: Ast::Val(Val::Int(2))
+                }),
+                Box::new(Ast::BinOp(
+                        BinOp::Add,
+                        Box::new(Ast::Id(Id(0, "x"))),
+                        Box::new(Ast::Val(Val::Int(1))))));
+    let input = 
+        Ast::Let(
+            Box::new(
+                SetField {
+                    name: "x",
+                    value: Ast::Val(Val::Int(1))
+                }),
+                Box::new(inner));
 
     let expected = Ok(Output::Int(3));
     let scope = Scope::new();
