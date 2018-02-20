@@ -45,12 +45,12 @@ fn test_execute_let_statement() {
         Ast::Let(
             Box::new(
                 SetField {
-                    name: "x",
+                    name: "x".to_string(),
                     value: Ast::Val(Val::Int(2))
                 }),
                 Box::new(Ast::BinOp(
                         BinOp::Add,
-                        Box::new(Ast::Id(Id(0, "x"))),
+                        Box::new(Ast::Id(Id(0, "x".to_string()))),
                         Box::new(Ast::Val(Val::Int(1))))));
 
     let expected = Ok(Output::Int(3));
@@ -67,18 +67,18 @@ fn test_nested_let() {
         Ast::Let(
             Box::new(
                 SetField {
-                    name: "y",
+                    name: "y".to_string(),
                     value: Ast::Val(Val::Int(2))
                 }),
                 Box::new(Ast::BinOp(
                         BinOp::Add,
-                        Box::new(Ast::Id(Id(0, "x"))),
-                        Box::new(Ast::Id(Id(0, "y"))))));
+                        Box::new(Ast::Id(Id(0, "x".to_string()))),
+                        Box::new(Ast::Id(Id(0, "y".to_string()))))));
     let input = 
         Ast::Let(
             Box::new(
                 SetField {
-                    name: "x",
+                    name: "x".to_string(),
                     value: Ast::Val(Val::Int(1))
                 }),
                 Box::new(inner));
@@ -98,18 +98,18 @@ fn test_shadowing_works() {
         Ast::Let(
             Box::new(
                 SetField {
-                    name: "x",
+                    name: "x".to_string(),
                     value: Ast::Val(Val::Int(2))
                 }),
                 Box::new(Ast::BinOp(
                         BinOp::Add,
-                        Box::new(Ast::Id(Id(0, "x"))),
+                        Box::new(Ast::Id(Id(0, "x".to_string()))),
                         Box::new(Ast::Val(Val::Int(1))))));
     let input = 
         Ast::Let(
             Box::new(
                 SetField {
-                    name: "x",
+                    name: "x".to_string(),
                     value: Ast::Val(Val::Int(1))
                 }),
                 Box::new(inner));
@@ -125,9 +125,9 @@ fn test_shadowing_works() {
 fn test_function_call() {
     // (fn x: + x 1 2)
     let binop = Ast::BinOp(BinOp::Add,
-                           Box::new(Ast::Id(Id(9, "x"))),
+                           Box::new(Ast::Id(Id(9, "x".to_string()))),
                            Box::new(Ast::Val(Val::Int(1))));
-    let func = Ast::Fn("x", Box::new(binop));
+    let func = Ast::Fn("x".to_string(), Box::new(binop));
     let fncall = 
         Ast::Call(
             Box::new(func),
@@ -146,21 +146,21 @@ fn closure_works() {
     //   (func 1)
     
     let fncall = Ast::Call(
-        Box::new(Ast::Id(Id(0, "func"))),
+        Box::new(Ast::Id(Id(0, "func".to_string()))),
         Box::new(Ast::Val(Val::Int(1))));
-    let func = Ast::Fn("y", 
+    let func = Ast::Fn("y".to_string(), 
                        Box::new(Ast::BinOp(
                                BinOp::Add,
-                               Box::new(Ast::Id(Id(0, "y"))),
-                               Box::new(Ast::Id(Id(0, "x"))))));
+                               Box::new(Ast::Id(Id(0, "y".to_string()))),
+                               Box::new(Ast::Id(Id(0, "x".to_string()))))));
     let inner_let = Ast::Let(
-        Box::new(SetField{name: "func", value: func}),
+        Box::new(SetField{name: "func".to_string(), value: func}),
         Box::new(fncall));
 
 
     let outer_let = Ast::Let(
         Box::new(SetField{
-            name: "x",
+            name: "x".to_string(),
             value: Ast::Val(Val::Int(2))
         }),
         Box::new(inner_let));
@@ -179,21 +179,21 @@ fn showing_in_closure_works() {
     //   (func 1)
     
     let fncall = Ast::Call(
-        Box::new(Ast::Id(Id(0, "func"))),
+        Box::new(Ast::Id(Id(0, "func".to_string()))),
         Box::new(Ast::Val(Val::Int(1))));
-    let func = Ast::Fn("x", 
+    let func = Ast::Fn("x".to_string(), 
                        Box::new(Ast::BinOp(
                                BinOp::Add,
-                               Box::new(Ast::Id(Id(0, "x"))),
+                               Box::new(Ast::Id(Id(0, "x".to_string()))),
                                Box::new(Ast::Val(Val::Int(5))))));
     let inner_let = Ast::Let(
-        Box::new(SetField{name: "func", value: func}),
+        Box::new(SetField{name: "func".to_string(), value: func}),
         Box::new(fncall));
 
 
     let outer_let = Ast::Let(
         Box::new(SetField{
-            name: "x",
+            name: "x".to_string(),
             value: Ast::Val(Val::Int(100))
         }),
         Box::new(inner_let));

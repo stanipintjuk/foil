@@ -4,28 +4,28 @@ use compiler::tokens::{BinOp, Val};
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub enum Ast<'a> {
-    BinOp(BinOp, Box<Ast<'a>>, Box<Ast<'a>>),
-    Val(Val<'a>),
-    Set(Set<'a>),
-    Let(Box<SetField<'a>>, Box<Ast<'a>>),
-    Fn(&'a str, Box<Ast<'a>>),
-    Call(Box<Ast<'a>>, Box<Ast<'a>>),
-    Id(Id<'a>),
-    Import(usize, &'a str),
+pub enum Ast {
+    BinOp(BinOp, Box<Ast>, Box<Ast>),
+    Val(Val),
+    Set(Set),
+    Let(Box<SetField>, Box<Ast>),
+    Fn(String, Box<Ast>),
+    Call(Box<Ast>, Box<Ast>),
+    Id(Id),
+    Import(usize, String),
 }
 
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct Id<'a>(pub usize, pub &'a str);
+pub struct Id(pub usize, pub String);
 
-pub type Set<'a> = Vec<SetField<'a>>;
+pub type Set = Vec<SetField>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct SetField<'a> {
-    pub name: &'a str,
-    pub value: Ast<'a>,
+pub struct SetField {
+    pub name: String,
+    pub value: Ast,
 }

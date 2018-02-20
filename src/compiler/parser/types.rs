@@ -2,26 +2,26 @@ use compiler::tokens::{Token, Keyword};
 use compiler::lexer::{LexError};
 use super::ast::Ast;
 
-pub type TokenIterator<'i, 's: 'i> = Iterator<Item=Result<Token<'s>, LexError<'s>>> + 'i;
+pub type TokenIterator<'i> = Iterator<Item=Result<Token, LexError>> + 'i;
 
-pub type ParseResult<'s> = Result<Ast<'s>, ParseError<'s>>;
+pub type ParseResult = Result<Ast, ParseError>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-pub enum ParseError<'s> {
-    Unexpected(Token<'s>),
+pub enum ParseError {
+    Unexpected(Token),
     ExpectedExpression(usize),
-    Lexer(LexError<'s>),
-    ExpectedGroupL(Token<'s>),
-    ExpectedId(Token<'s>),
+    Lexer(LexError),
+    ExpectedGroupL(Token),
+    ExpectedId(Token),
     UnexpectedEndOfCode(usize),
-    ExpectedAssignment(Token<'s>),
-    ExpectedComma(Token<'s>),
+    ExpectedAssignment(Token),
+    ExpectedComma(Token),
     UnexpectedKeyword(Keyword),
-    ExpectedKeyword(Keyword, Token<'s>),
-    ExpectedPath(Token<'s>),
-    ExpectedColon(Token<'s>),
-    ExpectedGroupR(Token<'s>),
+    ExpectedKeyword(Keyword, Token),
+    ExpectedPath(Token),
+    ExpectedColon(Token),
+    ExpectedGroupR(Token),
 }
 
 

@@ -29,11 +29,11 @@ macro_rules! token {
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub enum LexError<'a> {
-    Garbage(usize, &'a str)
+pub enum LexError {
+    Garbage(usize, String)
 }
 
-pub type LexResult<'a> = Result<Token<'a>, LexError<'a>>;
+pub type LexResult = Result<Token, LexError>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -49,7 +49,7 @@ impl<'a> Tokenizer<'a> {
     fn char_at(&self, pos: usize) -> Option<char> {
         self.buf.chars().nth(pos)
     }
-    fn lex_assign_or_equals(&mut self) -> Option<LexResult<'a>> {
+    fn lex_assign_or_equals(&mut self) -> Option<LexResult> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
             token!(Token::BinOp => BinOp::Equals, self => 2)
         } else {
@@ -57,7 +57,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_mul_or_pow(&mut self) -> Option<LexResult<'a>> {
+    fn lex_mul_or_pow(&mut self) -> Option<LexResult> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
             token!(Token::BinOp => BinOp::Pow, self => 2)
         } else {
@@ -65,7 +65,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_strlit(&mut self) -> Option<LexResult<'a>> {
+    fn lex_strlit(&mut self) -> Option<LexResult> {
         let matched = match_string(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -74,10 +74,10 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        token!(Token::Val => Val::String(mstr), self => matched.end())
+        token!(Token::Val => Val::String(mstr.to_string()), self => matched.end())
     }
 
-    fn lex_pathlit(&mut self) -> Option<LexResult<'a>> {
+    fn lex_pathlit(&mut self) -> Option<LexResult> {
         let matched = match_path(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -86,10 +86,10 @@ impl<'a> Tokenizer<'a> {
         let mstr = matched.as_str();
         let mstr = &mstr[1..mstr.len()-1];
 
-        token!(Token::Val => Val::Path(mstr), self => matched.end())
+        token!(Token::Val => Val::Path(mstr.to_string()), self => matched.end())
     }
 
-    fn lex_bareword(&mut self) -> Option<LexResult<'a>> {
+    fn lex_bareword(&mut self) -> Option<LexResult> {
         let matched = match_bare_word(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -100,14 +100,14 @@ impl<'a> Tokenizer<'a> {
             "fn" => Token::Keyword(self.pos, Keyword::Fn),
             "import" => Token::Keyword(self.pos, Keyword::Import),
             "set" => Token::Keyword(self.pos, Keyword::Set),
-            x => Token::Id(self.pos, x),
+            x => Token::Id(self.pos, x.to_string()),
         };
         self.pos += matched.end();
         Some(Ok(token))
         
     }
 
-    fn lex_numlit(&mut self) -> Option<LexResult<'a>> {
+    fn lex_numlit(&mut self) -> Option<LexResult> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
             token!(Token::Val => Val::Double(d), self => mdouble.end())
@@ -121,14 +121,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn garbage(&mut self) -> LexResult<'a> {
-        let err = LexError::Garbage(self.pos, &self.buf[self.pos..]);
+    fn garbage(&mut self) -> LexResult {
+        let err = LexError::Garbage(self.pos, self.buf[self.pos..].to_string());
         self.pos = self.buf.len();
         Err(err)
     }
 }
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = LexResult<'a>;
+    type Item = LexResult;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(end) = end_of_whitespace(&self.buf[self.pos..]) {
                 self.pos += end;
@@ -197,8 +197,8 @@ mod tests {
         let expected = vec![
             Ok(Token::Val(0, Val::Int(123))),
             Ok(Token::Val(4, Val::Double(123.123))),
-            Ok(Token::Val(12, Val::String("string"))),
-            Ok(Token::Val(21, Val::Path("path"))),
+            Ok(Token::Val(12, Val::String("string".to_string()))),
+            Ok(Token::Val(21, Val::Path("path".to_string()))),
         ];
 
         let actual: Vec<_> = Tokenizer::new(input).collect();
@@ -223,7 +223,7 @@ mod tests {
     #[test]
     fn test_garbage_string() {
         let input = "\"test ";
-        let expected = vec![ Err(LexError::Garbage(0, "\"test ")) ];
+        let expected = vec![ Err(LexError::Garbage(0, "\"test ".to_string())) ];
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn test_garbage_path() {
         let input = "<path ";
-        let expected = vec![ Err(LexError::Garbage(0, "<path ")) ];
+        let expected = vec![ Err(LexError::Garbage(0, "<path ".to_string())) ];
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }

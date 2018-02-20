@@ -84,11 +84,11 @@ fn test_set_construction() {
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Set)),
         Ok(Token::BlockL(0)),
-        Ok(Token::Id(0, "field1")),
+        Ok(Token::Id(0, "field1".to_string())),
         Ok(Token::BinOp(0, BinOp::Assign)),
-        Ok(Token::Val(0, Val::String("value"))),
+        Ok(Token::Val(0, Val::String("value".to_string()))),
         Ok(Token::Comma(0)),
-        Ok(Token::Id(0, "field2")),
+        Ok(Token::Id(0, "field2".to_string())),
         Ok(Token::BinOp(0, BinOp::Assign)),
         Ok(Token::Val(0, Val::Int(23))),
         Ok(Token::BlockR(0))
@@ -97,11 +97,11 @@ fn test_set_construction() {
     let expected = vec![
         Ok(Ast::Set( vec![ 
                      SetField { 
-                         name: "field1",
-                         value: Ast::Val(Val::String("value"))
+                         name: "field1".to_string(),
+                         value: Ast::Val(Val::String("value".to_string()))
                      },
                      SetField { 
-                         name: "field2",
+                         name: "field2".to_string(),
                          value: Ast::Val(Val::Int(23))
                      },
         ]))
@@ -121,12 +121,12 @@ fn parse_let_test() {
 
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Let)),
-        Ok(Token::Id(0, "x")),
+        Ok(Token::Id(0, "x".to_string())),
         Ok(Token::BinOp(0, BinOp::Assign)),
         Ok(Token::Val(0, Val::Int(2))),
         Ok(Token::Keyword(0, Keyword::In)),
         Ok(Token::BinOp(0, BinOp::Add)),
-        Ok(Token::Id(0, "x")),
+        Ok(Token::Id(0, "x".to_string())),
         Ok(Token::Val(0, Val::Int(1))),
     ];
 
@@ -134,12 +134,12 @@ fn parse_let_test() {
         Ok(Ast::Let(
                 Box::new(
                     SetField {
-                        name: "x",
+                        name: "x".to_string(),
                         value: Ast::Val(Val::Int(2))
                     }),
                     Box::new(Ast::BinOp(
                             BinOp::Add,
-                            Box::new(Ast::Id(Id(0, "x"))),
+                            Box::new(Ast::Id(Id(0, "x".to_string()))),
                             Box::new(Ast::Val(Val::Int(1)))))))
     ];
 
@@ -153,11 +153,11 @@ fn parse_import_test() {
     // import <path/to/file>
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Import)),
-        Ok(Token::Val(2, Val::Path("path/to/file"))),
+        Ok(Token::Val(2, Val::Path("path/to/file".to_string()))),
     ];
 
     let expected = vec![
-        Ok(Ast::Import(2, "path/to/file")),
+        Ok(Ast::Import(2, "path/to/file".to_string())),
     ];
     
     let mut iter = input.iter().map(Clone::clone);
@@ -171,17 +171,17 @@ fn parse_fn_test() {
     // fn x: + x 1
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Fn)),
-        Ok(Token::Id(3, "x")),
+        Ok(Token::Id(3, "x".to_string())),
         Ok(Token::Colon(4)),
         Ok(Token::BinOp(6, BinOp::Add)),
-        Ok(Token::Id(8, "x")),
+        Ok(Token::Id(8, "x".to_string())),
         Ok(Token::Val(10, Val::Int(1)))
     ];
 
     let expected = vec![
-        Ok(Ast::Fn("x", 
+        Ok(Ast::Fn("x".to_string(), 
                    Box::new(Ast::BinOp(BinOp::Add,
-                                       Box::new(Ast::Id(Id(8, "x"))),
+                                       Box::new(Ast::Id(Id(8, "x".to_string()))),
                                        Box::new(Ast::Val(Val::Int(1)))))))
     ];
 
@@ -195,15 +195,15 @@ fn parse_function_call() {
     // (myFunc "test")
     let input = vec![
         Ok(Token::GroupL(0)),
-        Ok(Token::Id(1, "myFunc")),
-        Ok(Token::Val(8, Val::String("test"))),
+        Ok(Token::Id(1, "myFunc".to_string())),
+        Ok(Token::Val(8, Val::String("test".to_string()))),
         Ok(Token::GroupR(14))
     ];
 
     let expected = vec![
         Ok(Ast::Call(
-                Box::new(Ast::Id(Id(1, "myFunc"))),
-                Box::new(Ast::Val(Val::String("test")))
+                Box::new(Ast::Id(Id(1, "myFunc".to_string()))),
+                Box::new(Ast::Val(Val::String("test".to_string())))
                 )
             )
     ];
