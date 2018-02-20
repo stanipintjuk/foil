@@ -140,11 +140,11 @@ impl<'i, 's: 'i> Parser<'i, 's> {
     }
 
     fn parse_fn_call(&mut self, pos: usize) -> Option<ParseResult<'s>> {
-        let (id_pos, id_name) = expect_id!(self.token_iter, pos);
-        let param = expect_expression!(self, id_pos);
+        let func = expect_expression!(self, pos);
+        let param = expect_expression!(self, pos);
         expect_group_r!(self.token_iter, pos);
         all_ok(Ast::Call(
-                Id(id_pos, id_name),
+                Box::new(func),
                 Box::new(param)))
     }
 

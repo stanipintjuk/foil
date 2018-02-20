@@ -1,14 +1,14 @@
 use compiler::parser::ast::{Ast};
 use compiler::tokens::{BinOp};
-use super::evaluator::Evaluator;
+use super::evaluator::{Evaluator, EvalResult};
 use super::error::EvalError;
 use super::output::Output;
 
 pub fn eval_add<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                                    left: &'ast Ast<'text>, 
-                                                   right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                                                   right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 
@@ -25,9 +25,9 @@ pub fn eval_add<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast
 
 pub fn eval_sub<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                    left: &'ast Ast<'text>, 
-                                   right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                                   right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 
@@ -44,9 +44,9 @@ pub fn eval_sub<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast
 
 pub fn eval_mul<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                left: &'ast Ast<'text>, 
-                               right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                               right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 
@@ -63,9 +63,9 @@ pub fn eval_mul<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast
 
 pub fn eval_div<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                left: &'ast Ast<'text>, 
-                               right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                               right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 
@@ -83,9 +83,9 @@ pub fn eval_div<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast
 pub fn eval_mod<'scope, 'ast: 'scope,  'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>,
                                     left: &'ast 
                                     Ast<'text>, 
-                                    right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                                    right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 
@@ -102,15 +102,15 @@ pub fn eval_mod<'scope, 'ast: 'scope,  'text: 'ast>(eval: &Evaluator<'scope, 'as
 
 pub fn eval_pow<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                                    _left: &'ast Ast<'text>, 
-                                                   _right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
+                                                   _right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
     panic!("Powers not yet supported");
 }
 
 pub fn eval_equal<'scope, 'ast: 'scope, 'text: 'ast>(eval: &Evaluator<'scope, 'ast, 'text>, 
                                                      left: &'ast Ast<'text>, 
-                                                     right: &'ast Ast<'text>) -> Result<Output, EvalError<'ast, 'text>> {
-    let left = Evaluator::new(left, eval.scope).eval();
-    let right = Evaluator::new(right, eval.scope).eval();
+                                                     right: &'ast Ast<'text>) -> EvalResult<'ast, 'text> {
+    let left = Evaluator::new(left, eval.scope.clone()).eval();
+    let right = Evaluator::new(right, eval.scope.clone()).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => 

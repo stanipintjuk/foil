@@ -202,7 +202,7 @@ fn parse_function_call() {
 
     let expected = vec![
         Ok(Ast::Call(
-                Id(1, "myFunc"),
+                Box::new(Ast::Id(Id(1, "myFunc"))),
                 Box::new(Ast::Val(Val::String("test")))
                 )
             )

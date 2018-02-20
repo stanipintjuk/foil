@@ -4,9 +4,11 @@ use super::output::Output;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-pub enum EvalError<'a, 's: 'a> {
-    IdNotFound(&'a Id<'s>),
-    InvalidBinOp(BinOp, Output, Output),
+#[derive(Clone)]
+pub enum EvalError<'ast, 'text: 'ast> {
+    IdNotFound(&'ast Id<'text>),
+    InvalidBinOp(BinOp, Output<'ast, 'text>, Output<'ast, 'text>),
+    NotAFunction(Output<'ast, 'text>),
 }
 
 

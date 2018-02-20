@@ -1,0 +1,17 @@
+use super::lexer::Tokenizer;
+use super::evaluator::{Output, Evaluator, Scope, OpenScope, ClosedScope};
+use super::parser::Parser;
+
+#[test]
+fn trivial_test() {
+    let input = "+ 1 2";
+    let expected = Output::Int(3);
+
+    let mut tokenizer = Tokenizer::new(input);
+    let mut parser = Parser::new(&mut tokenizer);
+    let ast = parser.next().unwrap().unwrap();
+
+    let scope = OpenScope::new();
+    let actual = Evaluator::new(&ast,  Scope::Open(&scope)).eval();
+    assert_eq!(Ok(expected), actual);
+}

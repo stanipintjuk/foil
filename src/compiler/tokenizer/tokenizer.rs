@@ -42,7 +42,7 @@ pub struct Tokenizer<'a> {
     pos: usize,
 }
 impl<'a> Tokenizer<'a> {
-    fn new(buf: &'a str) -> Tokenizer<'a> {
+    pub fn new(buf: &'a str) -> Tokenizer<'a> {
         Tokenizer{ buf: buf, pos: 0 }
     }
 
