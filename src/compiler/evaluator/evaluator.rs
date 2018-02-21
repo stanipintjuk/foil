@@ -1,9 +1,14 @@
+use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use compiler::parser::ast::{Ast, SetField, Id};
 use compiler::tokens::{BinOp, Val};
 use super::scope::{Scope, OpenScope};
 use super::output::{Output, Function};
 use super::error::EvalError;
+use compiler::lexer::Tokenizer;
+use std::fs::File;
+use compiler::parser::Parser;
+use std::io::Read;
 use super::binopevals::{
     eval_add, 
     eval_sub, 
@@ -23,10 +28,15 @@ Result<Output, EvalError>;
 pub struct Evaluator<'scope, 'ast: 'scope> {
     expr: &'ast Ast,
     pub scope: Scope<'scope, 'ast>,
+    base_dir: PathBuf,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
-        Evaluator{expr: expr, scope: scope}
+        Evaluator{expr: expr, scope: scope, base_dir: Path::new("./").to_owned()}
+    }
+
+    pub fn with_path(expr: &'ast Ast, scope: Scope<'scope, 'ast>, base_dir: PathBuf) -> Self {
+        Evaluator{expr: expr, scope: scope, base_dir: base_dir}
     }
 
     pub fn eval(&self) -> EvalResult {
@@ -38,7 +48,32 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             &Ast::Id(ref id) => self.eval_id(id),
             &Ast::Fn(ref param, ref expr) => self.eval_fn(param, expr),
             &Ast::Call(ref func, ref input) => self.eval_call(func, input),
+            &Ast::Import(_, ref file_name) => self.eval_file(file_name),
             _ => unimplemented!(),
+        }
+    }
+
+    fn eval_file(&self, file_name: &str) -> EvalResult {
+        let mut f = File::open(self.base_dir.join(file_name)).unwrap();
+        let mut contents = String::new();
+        
+        let read_res = f.read_to_string(&mut contents);
+        if let Err(err) = read_res {
+            return Err(EvalError::IO(err));
+        }
+
+        let mut tokenizer = Tokenizer::new(&contents);
+        let mut parser = Parser::new(&mut tokenizer);
+        if let Some(parse_res) = parser.next() {
+            match parse_res {
+                Ok(ast) => {
+                    let scope = OpenScope::new();
+                    Evaluator::new(&ast,  Scope::Open(&scope)).eval()
+                },
+                Err(err) => Err(EvalError::Parser(err)),
+            }
+        } else {
+            Err(EvalError::FileDoesNotContainExpression(file_name.to_string()))
         }
     }
 

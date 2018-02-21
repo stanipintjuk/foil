@@ -74,7 +74,7 @@ pub fn eval_mod<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast
     }
 }
 
-pub fn eval_pow<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, _left: &Ast, _right: &Ast) -> EvalResult {
+pub fn eval_pow<'scope, 'ast: 'scope>(_eval: &Evaluator<'scope, 'ast>, _left: &Ast, _right: &Ast) -> EvalResult {
     panic!("Powers not yet supported");
 }
 
@@ -91,5 +91,3 @@ pub fn eval_equal<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &A
         (_, Err(err)) => Err(err),
     }
 }
-
-

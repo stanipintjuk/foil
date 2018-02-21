@@ -173,7 +173,7 @@ fn closure_works() {
 }
 
 #[test]
-fn showing_in_closure_works() {
+fn shadowing_in_closure_works() {
     // let x = 100 in
     //  let func = fn x: x + 5 in
     //   (func 1)
@@ -202,5 +202,29 @@ fn showing_in_closure_works() {
     let expected = Ok(Output::Int(6));
     let scope = OpenScope::new();
     let actual = Evaluator::new(&outer_let, Scope::Open(&scope)).eval();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn import_works() {
+    use tempdir::TempDir;
+    use std::io::{Write};
+    use std::fs::{File, create_dir_all};
+
+    let tmpdir = TempDir::new("test").unwrap();
+    create_dir_all(tmpdir.path()).unwrap();
+
+    let contents = "+ 1 2".as_bytes();
+    let import_file = tmpdir.path().join("expr.foil");
+    {
+        let mut f = File::create(&import_file).unwrap();
+        f.write_all(contents).unwrap();
+        f.sync_all().unwrap();
+    }
+
+    let input = Ast::Import(0, import_file.to_str().unwrap().to_string());
+    let expected = Ok(Output::Int(3));
+    let scope = OpenScope::new();
+    let actual = Evaluator::with_path(&input, Scope::Open(&scope), tmpdir.path().to_path_buf()).eval();
     assert_eq!(expected, actual);
 }

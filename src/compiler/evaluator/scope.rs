@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use super::output::Output;
 use super::evaluator::{Evaluator, EvalResult};
 
 #[derive(PartialEq)]

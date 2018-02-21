@@ -8,6 +8,7 @@ pub type ParseResult = Result<Ast, ParseError>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
+#[derive(Clone)]
 pub enum ParseError {
     Unexpected(Token),
     ExpectedExpression(usize),

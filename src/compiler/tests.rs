@@ -1,5 +1,5 @@
 use super::lexer::Tokenizer;
-use super::evaluator::{Output, Evaluator, Scope, OpenScope, ClosedScope};
+use super::evaluator::{Output, Evaluator, Scope, OpenScope};
 use super::parser::Parser;
 
 #[test]
