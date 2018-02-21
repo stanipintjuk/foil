@@ -12,5 +12,5 @@ pub mod grammar;
 pub mod interpret;
 pub mod validate;
 pub mod builder;
-mod compiler;
+pub mod compiler;
 pub mod helpers;

@@ -4,16 +4,16 @@ use compiler::lexer::{LexResult};
 use super::ast::{Ast, Id, SetField};
 use super::types::{TokenIterator, ParseResult, ParseError};
 
-pub struct Parser<'i, 's: 'i> {
-    token_iter: &'i mut TokenIterator<'i, 's>,
+pub struct Parser<'i> {
+    token_iter: &'i mut TokenIterator<'i>,
 }
-impl<'i, 's: 'i> Parser<'i, 's> {
+impl<'i> Parser<'i> {
 
-    pub fn new(token_iter: &'i mut TokenIterator<'i, 's>) -> Self {
+    pub fn new(token_iter: &'i mut TokenIterator<'i>) -> Self {
         Parser{token_iter: token_iter}
     }
 
-    fn parse_bin_op(&mut self, op: BinOp, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_bin_op(&mut self, op: BinOp, pos: usize) -> Option<ParseResult> {
         // Get the left expression
         let left = expect_expression!(self, pos);
 
@@ -25,7 +25,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
                            Box::new(right))))
     }
 
-    fn parse_keyword(&mut self, keyword: Keyword, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_keyword(&mut self, keyword: Keyword, pos: usize) -> Option<ParseResult> {
         match keyword {
             Keyword::Let => self.parse_let(pos),
             Keyword::Fn => self.parse_fn(pos),
@@ -35,7 +35,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         }
     }
 
-    fn parse_let(&mut self, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_let(&mut self, pos: usize) -> Option<ParseResult> {
         let (pos, id_name) = expect_id!(self.token_iter, pos);
         let pos = expect_assignment!(self.token_iter, pos);
         let value = expect_expression!(self, pos);
@@ -51,7 +51,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
 
     }
 
-    fn parse_fn(&mut self, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_fn(&mut self, pos: usize) -> Option<ParseResult> {
         let (pos, arg_name) = expect_id!(self.token_iter, pos);
         let token = next_token!(self.token_iter, pos);
 
@@ -67,7 +67,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         all_ok(Ast::Fn(arg_name, Box::new(expr)))
     }
 
-    fn parse_import(&mut self, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_import(&mut self, pos: usize) -> Option<ParseResult> {
         let token = next_token!(self.token_iter, pos);
         match token {
             Token::Val(pos, Val::Path(path)) => {
@@ -79,7 +79,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         }
     }
 
-    fn parse_set(&mut self, pos: usize) -> Option<ParseResult<'s>> {
+    fn parse_set(&mut self, pos: usize) -> Option<ParseResult> {
         // Get the token
         let token = next_token!(self.token_iter, pos);
 
@@ -92,7 +92,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
             }
         };
 
-        let mut set_fields: Vec<SetField<'s>> = Vec::new();
+        let mut set_fields: Vec<SetField> = Vec::new();
 
         // Now find all the set fields
         loop {
@@ -125,7 +125,7 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         Some(Ok(Ast::Set(set_fields)))
     }
 
-    fn parse_set_field(&mut self, pos: usize) -> Option<Result<SetField<'s>, ParseError<'s>>> {
+    fn parse_set_field(&mut self, pos: usize) -> Option<Result<SetField, ParseError>> {
 
         // Expect an id token
         let (pos, field_name) = expect_id!(self.token_iter, pos);
@@ -139,16 +139,16 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         return Some(Ok(SetField { name: field_name, value: value }));
     }
 
-    fn parse_fn_call(&mut self, pos: usize) -> Option<ParseResult<'s>> {
-        let (id_pos, id_name) = expect_id!(self.token_iter, pos);
-        let param = expect_expression!(self, id_pos);
+    fn parse_fn_call(&mut self, pos: usize) -> Option<ParseResult> {
+        let func = expect_expression!(self, pos);
+        let param = expect_expression!(self, pos);
         expect_group_r!(self.token_iter, pos);
         all_ok(Ast::Call(
-                Id(id_pos, id_name),
+                Box::new(func),
                 Box::new(param)))
     }
 
-    fn parse_token(&mut self, token: LexResult<'s>) -> Option<ParseResult<'s>> {
+    fn parse_token(&mut self, token: LexResult) -> Option<ParseResult> {
         match token {
             Ok(Token::BinOp(pos, op)) => self.parse_bin_op(op, pos),
             Ok(Token::Val(_, val)) => all_ok(Ast::Val(val)),
@@ -160,8 +160,8 @@ impl<'i, 's: 'i> Parser<'i, 's> {
         }
     }
 }
-impl<'i, 's: 'i> Iterator for Parser<'i, 's> {
-    type Item = Result<Ast<'s>, ParseError<'s>>;
+impl<'i> Iterator for Parser<'i> {
+    type Item = Result<Ast, ParseError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(token) = self.token_iter.next() {

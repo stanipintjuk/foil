@@ -1,12 +1,12 @@
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub enum Token<'a> {
+pub enum Token {
     BinOp(usize, BinOp),
     UnaryOp(usize, UnaryOp),
-    Val(usize, Val<'a>),
+    Val(usize, Val),
     Keyword(usize, Keyword),
-    Id(usize, &'a str),
+    Id(usize, String),
     GroupL(usize),
     GroupR(usize),
     BlockL(usize),
@@ -39,11 +39,11 @@ pub enum UnaryOp {
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub enum Val<'a> {
+pub enum Val {
     Int(i64),
     Double(f64),
-    String(&'a str),
-    Path(&'a str),
+    String(String),
+    Path(String),
 }
 
 #[derive(PartialEq)]
