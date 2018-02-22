@@ -1,8 +1,9 @@
 use super::evaluator::Evaluator;
 use super::output::Output;
 use super::scope::{OpenScope, Scope};
+
 use compiler::parser::ast::{Ast, SetField, Id};
-use compiler::tokens::{Val, BinOp};
+use compiler::tokenizer::tokens::{Val, BinOp};
 
 #[test]
 fn test_execute_binary_op() {
@@ -225,6 +226,6 @@ fn import_works() {
     let input = Ast::Import(0, import_file.to_str().unwrap().to_string());
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::with_path(&input, Scope::Open(&scope), tmpdir.path().to_path_buf()).eval();
+    let actual = Evaluator::with_file(&input, Scope::Open(&scope), import_file.to_path_buf()).eval();
     assert_eq!(expected, actual);
 }

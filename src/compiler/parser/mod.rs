@@ -1,8 +1,8 @@
 #[macro_use] mod macros;
 mod parser;
-pub use self::parser::*;
+pub use self::parser::{Parser, ParseResult};
 pub mod ast;
-mod types;
-pub use self::types::*;
+mod error;
+pub use self::error::{ParseError};
 
 #[cfg(test)] mod tests;

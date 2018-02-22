@@ -7,6 +7,10 @@ use super::regex::{
     match_string,
     match_path
 };
+use super::error::TokenError;
+
+pub type TokenResult = Result<Token, TokenError>;
+pub type TokenIterator<'i> = Iterator<Item=TokenResult> + 'i;
 
 // Convinient way to return a token and move the lexer position forwards.
 // Example:
@@ -28,15 +32,6 @@ macro_rules! token {
 
 #[derive(PartialEq)]
 #[derive(Debug)]
-#[derive(Clone)]
-pub enum LexError {
-    Garbage(usize, String)
-}
-
-pub type LexResult = Result<Token, LexError>;
-
-#[derive(PartialEq)]
-#[derive(Debug)]
 pub struct Tokenizer<'a> {
     buf: &'a str,
     pos: usize,
@@ -49,7 +44,7 @@ impl<'a> Tokenizer<'a> {
     fn char_at(&self, pos: usize) -> Option<char> {
         self.buf.chars().nth(pos)
     }
-    fn lex_assign_or_equals(&mut self) -> Option<LexResult> {
+    fn lex_assign_or_equals(&mut self) -> Option<TokenResult> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
             token!(Token::BinOp => BinOp::Equals, self => 2)
         } else {
@@ -57,7 +52,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_mul_or_pow(&mut self) -> Option<LexResult> {
+    fn lex_mul_or_pow(&mut self) -> Option<TokenResult> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('*'), Some('*')) {
             token!(Token::BinOp => BinOp::Pow, self => 2)
         } else {
@@ -65,7 +60,7 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_strlit(&mut self) -> Option<LexResult> {
+    fn lex_strlit(&mut self) -> Option<TokenResult> {
         let matched = match_string(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -77,7 +72,7 @@ impl<'a> Tokenizer<'a> {
         token!(Token::Val => Val::String(mstr.to_string()), self => matched.end())
     }
 
-    fn lex_pathlit(&mut self) -> Option<LexResult> {
+    fn lex_pathlit(&mut self) -> Option<TokenResult> {
         let matched = match_path(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -89,7 +84,7 @@ impl<'a> Tokenizer<'a> {
         token!(Token::Val => Val::Path(mstr.to_string()), self => matched.end())
     }
 
-    fn lex_bareword(&mut self) -> Option<LexResult> {
+    fn lex_bareword(&mut self) -> Option<TokenResult> {
         let matched = match_bare_word(&self.buf[self.pos..]);
         if matched == None {
             return Some(self.garbage());
@@ -107,7 +102,7 @@ impl<'a> Tokenizer<'a> {
         
     }
 
-    fn lex_numlit(&mut self) -> Option<LexResult> {
+    fn lex_numlit(&mut self) -> Option<TokenResult> {
         if let Some(mdouble) = match_double(&self.buf[self.pos..]) {
             let d = mdouble.as_str().parse::<f64>().unwrap();
             token!(Token::Val => Val::Double(d), self => mdouble.end())
@@ -121,14 +116,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn garbage(&mut self) -> LexResult {
-        let err = LexError::Garbage(self.pos, self.buf[self.pos..].to_string());
+    fn garbage(&mut self) -> TokenResult {
+        let err = TokenError::Garbage(self.pos, self.buf[self.pos..].to_string());
         self.pos = self.buf.len();
         Err(err)
     }
 }
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = LexResult;
+    type Item = TokenResult;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(end) = end_of_whitespace(&self.buf[self.pos..]) {
                 self.pos += end;
@@ -223,7 +218,7 @@ mod tests {
     #[test]
     fn test_garbage_string() {
         let input = "\"test ";
-        let expected = vec![ Err(LexError::Garbage(0, "\"test ".to_string())) ];
+        let expected = vec![ Err(TokenError::Garbage(0, "\"test ".to_string())) ];
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
@@ -231,7 +226,7 @@ mod tests {
     #[test]
     fn test_garbage_path() {
         let input = "<path ";
-        let expected = vec![ Err(LexError::Garbage(0, "<path ".to_string())) ];
+        let expected = vec![ Err(TokenError::Garbage(0, "<path ".to_string())) ];
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }

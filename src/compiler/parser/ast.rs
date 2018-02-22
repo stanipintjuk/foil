@@ -1,4 +1,4 @@
-use compiler::tokens::{BinOp, Val};
+use compiler::tokenizer::tokens::{BinOp, Val};
 
 /// AST - Abstract Syntax Tree
 #[derive(PartialEq)]

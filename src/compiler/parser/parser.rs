@@ -1,8 +1,12 @@
 use helpers::all_ok;
-use compiler::tokens::{Token, BinOp, Val, Keyword};
-use compiler::lexer::{LexResult};
+
+use compiler::tokenizer::tokens::{Token, BinOp, Val, Keyword};
+use compiler::tokenizer::{TokenIterator, TokenResult};
+
 use super::ast::{Ast, Id, SetField};
-use super::types::{TokenIterator, ParseResult, ParseError};
+use super::error::ParseError;
+
+pub type ParseResult = Result<Ast, ParseError>;
 
 pub struct Parser<'i> {
     token_iter: &'i mut TokenIterator<'i>,
@@ -148,7 +152,7 @@ impl<'i> Parser<'i> {
                 Box::new(param)))
     }
 
-    fn parse_token(&mut self, token: LexResult) -> Option<ParseResult> {
+    fn parse_token(&mut self, token: TokenResult) -> Option<ParseResult> {
         match token {
             Ok(Token::BinOp(pos, op)) => self.parse_bin_op(op, pos),
             Ok(Token::Val(_, val)) => all_ok(Ast::Val(val)),

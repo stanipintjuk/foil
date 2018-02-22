@@ -1,8 +1,11 @@
-use compiler::tokens::{BinOp};
-use compiler::parser::ast::{Id};
-use compiler::parser::ParseError;
-use super::output::Output;
 use std::io::{Error as IOError};
+use std::path::PathBuf;
+
+use compiler::tokenizer::tokens::{BinOp};
+use compiler::parser::ParseError;
+use compiler::parser::ast::{Id};
+
+use super::output::Output;
 
 #[derive(Debug)]
 pub enum EvalError {
@@ -10,7 +13,7 @@ pub enum EvalError {
     InvalidBinOp(BinOp, Output, Output),
     NotAFunction(Output),
     Parser(ParseError),
-    FileDoesNotContainExpression(String),
+    FileDoesNotContainExpression(PathBuf),
     IO(IOError),
     IOUnknown,
 }

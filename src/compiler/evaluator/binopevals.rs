@@ -1,5 +1,5 @@
 use compiler::parser::ast::{Ast};
-use compiler::tokens::{BinOp};
+use compiler::tokenizer::tokens::{BinOp};
 use super::evaluator::{Evaluator, EvalResult};
 use super::error::EvalError;
 use super::output::Output;

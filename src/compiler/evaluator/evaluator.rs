@@ -1,14 +1,15 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::collections::HashMap;
+
+use compiler;
+
 use compiler::parser::ast::{Ast, SetField, Id};
-use compiler::tokens::{BinOp, Val};
+use compiler::tokenizer::tokens::{BinOp, Val};
+
 use super::scope::{Scope, OpenScope};
 use super::output::{Output, Function};
 use super::error::EvalError;
-use compiler::lexer::Tokenizer;
-use std::fs::File;
-use compiler::parser::Parser;
-use std::io::Read;
+
 use super::binopevals::{
     eval_add, 
     eval_sub, 
@@ -20,23 +21,22 @@ use super::binopevals::{
 };
 
 
-pub type EvalResult =
-Result<Output, EvalError>;
+pub type EvalResult = Result<Output, EvalError>;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Evaluator<'scope, 'ast: 'scope> {
     expr: &'ast Ast,
     pub scope: Scope<'scope, 'ast>,
-    base_dir: PathBuf,
+    file_path: Option<PathBuf>,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
-        Evaluator{expr: expr, scope: scope, base_dir: Path::new("./").to_owned()}
+        Evaluator{expr: expr, scope: scope, file_path: None}
     }
 
-    pub fn with_path(expr: &'ast Ast, scope: Scope<'scope, 'ast>, base_dir: PathBuf) -> Self {
-        Evaluator{expr: expr, scope: scope, base_dir: base_dir}
+    pub fn with_file(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf) -> Self {
+        Evaluator{expr: expr, scope: scope, file_path: Some(file_path)}
     }
 
     pub fn eval(&self) -> EvalResult {
@@ -54,27 +54,16 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     }
 
     fn eval_file(&self, file_name: &str) -> EvalResult {
-        let mut f = File::open(self.base_dir.join(file_name)).unwrap();
-        let mut contents = String::new();
-        
-        let read_res = f.read_to_string(&mut contents);
-        if let Err(err) = read_res {
-            return Err(EvalError::IO(err));
-        }
-
-        let mut tokenizer = Tokenizer::new(&contents);
-        let mut parser = Parser::new(&mut tokenizer);
-        if let Some(parse_res) = parser.next() {
-            match parse_res {
-                Ok(ast) => {
-                    let scope = OpenScope::new();
-                    Evaluator::new(&ast,  Scope::Open(&scope)).eval()
-                },
-                Err(err) => Err(EvalError::Parser(err)),
-            }
+        let mut file = if let Some(ref file_path) = self.file_path {
+            let mut file = file_path.clone();
+            file.pop();
+            file
         } else {
-            Err(EvalError::FileDoesNotContainExpression(file_name.to_string()))
-        }
+            let mut file = PathBuf::from("./");
+            file
+        };
+        file.push(file_name);
+        compiler::evaluate_file(&file)
     }
 
     fn eval_fn(&self, param: &str, expr: &Ast) -> EvalResult {

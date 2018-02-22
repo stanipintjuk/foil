@@ -1,7 +1,8 @@
-mod tokenizer;
-pub use self::tokenizer::tokens;
-pub use self::tokenizer::tokenizer as lexer;
+pub mod tokenizer;
 pub mod parser;
 pub mod evaluator;
+
+mod compiler;
+pub use self::compiler::{evaluate_file};
 
 #[cfg(test)] mod tests;

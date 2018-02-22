@@ -1,4 +1,4 @@
-use super::lexer::Tokenizer;
+use super::tokenizer::Tokenizer;
 use super::evaluator::{Output, Evaluator, Scope, OpenScope};
 use super::parser::Parser;
 

@@ -1,10 +1,5 @@
-use compiler::tokens::{Token, Keyword};
-use compiler::lexer::{LexError};
-use super::ast::Ast;
-
-pub type TokenIterator<'i> = Iterator<Item=Result<Token, LexError>> + 'i;
-
-pub type ParseResult = Result<Ast, ParseError>;
+use compiler::tokenizer::tokens::{Token, Keyword};
+use compiler::tokenizer::{TokenError};
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -12,7 +7,7 @@ pub type ParseResult = Result<Ast, ParseError>;
 pub enum ParseError {
     Unexpected(Token),
     ExpectedExpression(usize),
-    Lexer(LexError),
+    Lexer(TokenError),
     ExpectedGroupL(Token),
     ExpectedId(Token),
     UnexpectedEndOfCode(usize),
