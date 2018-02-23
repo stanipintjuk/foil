@@ -13,6 +13,7 @@ pub enum Token {
     BlockR(usize),
     Comma(usize),
     Colon(usize),
+    Assign(usize),
 }
 
 #[derive(PartialEq)]
@@ -25,7 +26,6 @@ pub enum BinOp {
     Div,
     Mod,
     Pow,
-    Assign,
     Equals,
 }
 
@@ -44,6 +44,7 @@ pub enum Val {
     Double(f64),
     String(String),
     Path(String),
+    Bool(bool),
 }
 
 #[derive(PartialEq)]

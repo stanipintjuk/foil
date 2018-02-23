@@ -32,7 +32,7 @@ macro_rules! expect_assignment {
     ( $lexer:expr, $pos:expr ) => {{
         let token = next_token!($lexer, $pos);
         let pos = match token {
-            Token::BinOp(pos, BinOp::Assign) => { pos },
+            Token::Assign(pos) => { pos },
             token => {
                 return Some(Err(ParseError::ExpectedAssignment(token)));
             }

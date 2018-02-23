@@ -41,15 +41,15 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
 
     pub fn eval(&self) -> EvalResult {
         match self.expr {
-            &Ast::Let(ref field, ref child_expr) => self.eval_let(field, child_expr),
             &Ast::BinOp(ref binop, ref left, ref right) => 
                 self.eval_binary_op(binop, left, right),
             &Ast::Val(ref val) => self.eval_val(val),
-            &Ast::Id(ref id) => self.eval_id(id),
+            &Ast::Set(_) => panic!("Evaluation for set is not implemented"),
+            &Ast::Let(ref field, ref child_expr) => self.eval_let(field, child_expr),
             &Ast::Fn(ref param, ref expr) => self.eval_fn(param, expr),
             &Ast::Call(ref func, ref input) => self.eval_call(func, input),
+            &Ast::Id(ref id) => self.eval_id(id),
             &Ast::Import(_, ref file_name) => self.eval_file(file_name),
-            _ => unimplemented!(),
         }
     }
 
@@ -85,7 +85,10 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     fn eval_val(&self, val: &Val) -> EvalResult {
         match val {
             &Val::Int(v) => Ok(Output::Int(v)),
-            _ => unimplemented!(),
+            &Val::Double(v) => Ok(Output::Double(v)),
+            &Val::String(ref v) => Ok(Output::String(v.to_string())),
+            &Val::Path(ref v) => Ok(Output::String(v.to_string())),
+            &Val::Bool(ref b) => Ok(Output::Bool(*b)),
         }
     }
 
@@ -106,8 +109,6 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             &BinOp::Div => eval_div(self, left, right),
             &BinOp::Mod => eval_mod(self, left, right),
             &BinOp::Pow => eval_pow(self, left, right),
-            &BinOp::Assign => panic!("Tell Stani that he is a 
-            dumbass and that `=` is technically not a binary operator"),
             &BinOp::Equals => eval_equal(self, left, right),
         }
     }

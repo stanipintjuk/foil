@@ -48,7 +48,7 @@ impl<'a> Tokenizer<'a> {
         if (self.char_at(self.pos), self.char_at(self.pos + 1)) == (Some('='), Some('=')) {
             token!(Token::BinOp => BinOp::Equals, self => 2)
         } else {
-            token!(Token::BinOp => BinOp::Assign, self => 1)
+            token!(Token::Assign, self => 1)
         }
     }
 
@@ -95,6 +95,9 @@ impl<'a> Tokenizer<'a> {
             "fn" => Token::Keyword(self.pos, Keyword::Fn),
             "import" => Token::Keyword(self.pos, Keyword::Import),
             "set" => Token::Keyword(self.pos, Keyword::Set),
+            "in" => Token::Keyword(self.pos, Keyword::In),
+            "true" => Token::Val(self.pos, Val::Bool(true)),
+            "false" => Token::Val(self.pos, Val::Bool(false)),
             x => Token::Id(self.pos, x.to_string()),
         };
         self.pos += matched.end();
@@ -177,7 +180,7 @@ mod tests {
             Ok(Token::BinOp(8, BinOp::Pow)),
             Ok(Token::BinOp(11, BinOp::Add)),
             Ok(Token::BinOp(13, BinOp::Equals)),
-            Ok(Token::BinOp(16, BinOp::Assign)),
+            Ok(Token::Assign(16)),
             Ok(Token::UnaryOp(18, UnaryOp::Not)),
         ];
 
@@ -202,13 +205,14 @@ mod tests {
 
     #[test]
     fn test_tokenizer_keywords_work() {
-        let input = "let fn import set";
+        let input = "let fn import set in";
         
         let expected = vec![
             Ok(Token::Keyword(0, Keyword::Let)),
             Ok(Token::Keyword(4, Keyword::Fn)),
             Ok(Token::Keyword(7, Keyword::Import)),
             Ok(Token::Keyword(14, Keyword::Set)),
+            Ok(Token::Keyword(18, Keyword::In)),
         ];
 
         let actual: Vec<_> = Tokenizer::new(input).collect();

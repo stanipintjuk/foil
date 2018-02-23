@@ -85,11 +85,11 @@ fn test_set_construction() {
         Ok(Token::Keyword(0, Keyword::Set)),
         Ok(Token::BlockL(0)),
         Ok(Token::Id(0, "field1".to_string())),
-        Ok(Token::BinOp(0, BinOp::Assign)),
+        Ok(Token::Assign(0)),
         Ok(Token::Val(0, Val::String("value".to_string()))),
         Ok(Token::Comma(0)),
         Ok(Token::Id(0, "field2".to_string())),
-        Ok(Token::BinOp(0, BinOp::Assign)),
+        Ok(Token::Assign(0)),
         Ok(Token::Val(0, Val::Int(23))),
         Ok(Token::BlockR(0))
     ];
@@ -122,7 +122,7 @@ fn parse_let_test() {
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Let)),
         Ok(Token::Id(0, "x".to_string())),
-        Ok(Token::BinOp(0, BinOp::Assign)),
+        Ok(Token::Assign(0)),
         Ok(Token::Val(0, Val::Int(2))),
         Ok(Token::Keyword(0, Keyword::In)),
         Ok(Token::BinOp(0, BinOp::Add)),
