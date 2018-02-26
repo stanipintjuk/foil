@@ -16,6 +16,9 @@ pub enum EvalError {
     FileDoesNotContainExpression(PathBuf),
     IO(IOError),
     IOUnknown,
+    PathNotRelative(String),
+    NotFile(String),
+    NotContent(Output),
 }
 impl PartialEq for EvalError {
     fn eq(&self, other: &EvalError) -> bool {
@@ -29,6 +32,11 @@ impl PartialEq for EvalError {
              &EvalError::FileDoesNotContainExpression(ref r)) => l == r,
             (&EvalError::IO(_), &EvalError::IO(_)) => true,
             (&EvalError::IOUnknown, &EvalError::IOUnknown) => true,
+            (&EvalError::PathNotRelative(ref l),
+             &EvalError::PathNotRelative(ref r)) => l == r,
+            (&EvalError::NotFile(ref l), &EvalError::NotFile(ref r)) => l == r,
+            (&EvalError::NotContent(ref l),
+             &EvalError::NotContent(ref r)) => l == r,
             (_, _) => false,
         }
     }
@@ -49,6 +57,9 @@ impl Clone for EvalError {
             &EvalError::IO(_) => EvalError::IOUnknown,
 
             &EvalError::IOUnknown => EvalError::IOUnknown,
+            &EvalError::PathNotRelative(ref x) => EvalError::PathNotRelative(x.clone()),
+            &EvalError::NotFile(ref x) => EvalError::NotFile(x.clone()),
+            &EvalError::NotContent(ref x) => EvalError::NotContent(x.clone())
         }
     }
 }

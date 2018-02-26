@@ -223,9 +223,13 @@ fn import_works() {
         f.sync_all().unwrap();
     }
 
+    let outdir = TempDir::new("out").unwrap();
+    create_dir_all(outdir.path()).unwrap();
+    let out_file = outdir.path().join("expr.html");
+
     let input = Ast::Import(0, import_file.to_str().unwrap().to_string());
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::with_file(&input, Scope::Open(&scope), import_file.to_path_buf()).eval();
+    let actual = Evaluator::with_file(&input, Scope::Open(&scope), import_file.to_path_buf(), out_file.to_path_buf()).eval();
     assert_eq!(expected, actual);
 }

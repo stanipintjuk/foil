@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use compiler::parser::ast::{Ast};
 use super::scope::{OpenScope, ClosedScope, Scope};
 use super::evaluator::{Evaluator, EvalResult};
+use super::error::EvalError;
 
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -12,6 +13,17 @@ pub enum Output {
     Bool(bool),
     String(String),
     Fn(Function),
+}
+
+impl Output {
+    pub fn to_content(self) -> Result<String, EvalError> {
+        match self {
+            Output::Int(x) => Ok(format!("{}", x)),
+            Output::Bool(x) => Ok(format!("{}", x)),
+            Output::String(x) => Ok(x),
+            non_content => Err(EvalError::NotContent(non_content)),
+        }
+    }
 }
 
 #[derive(PartialEq)]

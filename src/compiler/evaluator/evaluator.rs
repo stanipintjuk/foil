@@ -9,6 +9,7 @@ use compiler::tokenizer::tokens::{BinOp, Val};
 use super::scope::{Scope, OpenScope};
 use super::output::{Output, Function};
 use super::error::EvalError;
+use super::eval_path::process_path;
 
 use super::binopevals::{
     eval_add, 
@@ -29,14 +30,15 @@ pub struct Evaluator<'scope, 'ast: 'scope> {
     expr: &'ast Ast,
     pub scope: Scope<'scope, 'ast>,
     file_path: Option<PathBuf>,
+    out_path: Option<PathBuf>,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
-        Evaluator{expr: expr, scope: scope, file_path: None}
+        Evaluator{expr: expr, scope: scope, file_path: None, out_path: None}
     }
 
-    pub fn with_file(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf) -> Self {
-        Evaluator{expr: expr, scope: scope, file_path: Some(file_path)}
+    pub fn with_file(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
+        Evaluator{expr: expr, scope: scope, file_path: Some(file_path), out_path: Some(out_path)}
     }
 
     pub fn eval(&self) -> EvalResult {
@@ -62,8 +64,19 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             let mut file = PathBuf::from("./");
             file
         };
+
+        let mut out_file = if let Some(ref out_path) = self.out_path {
+            let mut file = out_path.clone();
+            file.pop();
+            file
+        } else {
+            let mut file = PathBuf::from("./");
+            file
+        };
+
         file.push(file_name);
-        compiler::evaluate_file(&file)
+        out_file.push(file_name);
+        compiler::evaluate_file(&file, &out_file)
     }
 
     fn eval_fn(&self, param: &str, expr: &Ast) -> EvalResult {
@@ -83,11 +96,13 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     }
 
     fn eval_val(&self, val: &Val) -> EvalResult {
+        let in_file = self.file_path.unwrap_or(Path::new("./"));
+        let out_file = self.out_path.unwrap().to_owned().parent().unwrap();
         match val {
             &Val::Int(v) => Ok(Output::Int(v)),
             &Val::Double(v) => Ok(Output::Double(v)),
             &Val::String(ref v) => Ok(Output::String(v.to_string())),
-            &Val::Path(ref v) => Ok(Output::String(v.to_string())),
+            &Val::Path(ref v) => process_path(v, in_file, out_file),
             &Val::Bool(ref b) => Ok(Output::Bool(*b)),
         }
     }

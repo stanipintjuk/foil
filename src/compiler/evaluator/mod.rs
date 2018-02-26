@@ -12,4 +12,6 @@ pub use self::output::{Output, Function};
 mod scope;
 pub use self::scope::{Scope, OpenScope, ClosedScope};
 
+mod eval_path;
+
 #[cfg(test)] mod tests;
