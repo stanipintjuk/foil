@@ -64,6 +64,13 @@ impl<'i> Parser<'i> {
             },
             token => {
                 let child = self.parse_html_child(token);
+                if let Some(Ok(child)) = child {
+                    children.push(child);
+                } else if let Some(Err(err)) = child {
+                    return Some(Err(err));
+                } else {
+                    return Some(Err(ParseError::UnexpectedEndOfCode(pos)));
+                }
             }
         }
 
