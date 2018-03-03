@@ -119,6 +119,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    fn lex_html_keyword(&mut self) -> Option<TokenResult> {
+        if &self.buf[self.pos..self.pos+5] == "html!" {
+            token!(Token::Keyword => Keyword::Html, self=>5)
+        } else {
+            self.lex_bareword()
+        }
+    }
+
     fn garbage(&mut self) -> TokenResult {
         let err = TokenError::Garbage(self.pos, self.buf[self.pos..].to_string());
         self.pos = self.buf.len();
@@ -155,6 +163,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             '*' => self.lex_mul_or_pow(),
             '"' => self.lex_strlit(),
             '<' => self.lex_pathlit(),
+            'h' => self.lex_html_keyword(),
             x if x.is_alphabetic() => self.lex_bareword(),
             x if x.is_numeric() => self.lex_numlit(),
             _ => Some(self.garbage()),
@@ -284,8 +293,8 @@ mod tests {
             Ok(Token::Keyword(0, Keyword::Html)),
             Ok(Token::Id(6, "html".to_string())),
             Ok(Token::BlockL(10)),
-            Ok(Token::Id(15, "h1".to_string())),
-            Ok(Token::Val(10, Val::String("test".to_string()))),
+            Ok(Token::Id(12, "h1".to_string())),
+            Ok(Token::Val(15, Val::String("test".to_string()))),
             Ok(Token::BlockR(22))
         ];
 

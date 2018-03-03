@@ -231,3 +231,36 @@ fn parse_function_call() {
     assert_eq!(expected, actual);
 }
 
+
+#[test]
+fn parse_html_with_expression() {
+    // html! h1 { (+ 1 2) }
+    let input = vec![
+        Ok(Token::Keyword(0, Keyword::Html)),
+        Ok(Token::Id(0, "h1".to_string())),
+        Ok(Token::BlockL(0)),
+        Ok(Token::GroupL(0)),
+        Ok(Token::BinOp(0, BinOp::Add)),
+        Ok(Token::Val(0, Val::Int(1))),
+        Ok(Token::Val(0, Val::Int(2))),
+        Ok(Token::GroupR(0)),
+        Ok(Token::BlockR(0)),
+    ];
+    let mut input = input.iter().map(Clone::clone);
+
+    let inner_expression = Ast::BinOp(
+        BinOp::Add,
+        Box::new(Ast::Val(Val::Int(1))),
+        Box::new(Ast::Val(Val::Int(2))));
+
+    let expected = vec![
+        Ok(Ast::Html{
+            tag_name: "h1".to_string(), 
+            attributes: vec![],
+            children: vec![inner_expression],
+        })
+    ];
+
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}

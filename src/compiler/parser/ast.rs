@@ -13,6 +13,11 @@ pub enum Ast {
     Call(Box<Ast>, Box<Ast>),
     Id(Id),
     Import(usize, String),
+    Html{
+        tag_name: String, 
+        attributes: Vec<SetField>,
+        children: Vec<Ast>,
+    },
 }
 
 #[derive(PartialEq)]
