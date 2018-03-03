@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{PathBuf};
 use std::collections::HashMap;
 
 use compiler;
@@ -24,23 +24,34 @@ use super::binopevals::{
 
 pub type EvalResult = Result<Output, EvalError>;
 
+/// A struct that holds all the relevant information to evaluate an AST (Abstract Syntax Tree)
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Evaluator<'scope, 'ast: 'scope> {
-    expr: &'ast Ast,
+    /// Scope of the evaluation
     pub scope: Scope<'scope, 'ast>,
+
+    expr: &'ast Ast,
     file_path: Option<PathBuf>,
     out_path: Option<PathBuf>,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
+    /// # Arguments
+    /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
+    /// `scope` - The scope of the evaluation.
     pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
         Evaluator{expr: expr, scope: scope, file_path: None, out_path: None}
     }
 
+    /// # Arguments
+    /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
+    /// `scope` - The scope of the evaluation.
+    /// `file_path` - The path to the file for which the AST has been evaluated.
     pub fn with_file(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
         Evaluator{expr: expr, scope: scope, file_path: Some(file_path), out_path: Some(out_path)}
     }
 
+    /// Evaluates the expression
     pub fn eval(&self) -> EvalResult {
         match self.expr {
             &Ast::BinOp(ref binop, ref left, ref right) => 
@@ -96,13 +107,13 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     }
 
     fn eval_val(&self, val: &Val) -> EvalResult {
-        let in_file = self.file_path.unwrap_or(Path::new("./"));
-        let out_file = self.out_path.unwrap().to_owned().parent().unwrap();
+        let fall_back_dir = PathBuf::from("./");
+        let working_dir = self.file_path.as_ref().unwrap_or(&fall_back_dir);
         match val {
             &Val::Int(v) => Ok(Output::Int(v)),
             &Val::Double(v) => Ok(Output::Double(v)),
             &Val::String(ref v) => Ok(Output::String(v.to_string())),
-            &Val::Path(ref v) => process_path(v, in_file, out_file),
+            &Val::Path(ref v) => process_path(v, working_dir, &self.out_path.as_ref()),
             &Val::Bool(ref b) => Ok(Output::Bool(*b)),
         }
     }

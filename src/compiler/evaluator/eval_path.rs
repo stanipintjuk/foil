@@ -1,11 +1,27 @@
 use compiler::evaluator::error::EvalError;
 use compiler::evaluator::{EvalResult, Output};
 use compiler::{evaluate_file, write_to_file, copy_file};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ffi::OsStr;
 
-pub fn process_path(path: &str, src_path: &Path, out_path: &Path) -> EvalResult {
-    build_path(path, src_path, out_path)
+/// # Arguments
+/// `file` - relative path to the file to be processesed.
+/// `src_path` - current working directory.
+/// `out_path` - the directory to  which the processed file would be copied.
+/// 
+/// # Errors
+/// `EvalError::NotAFile(String)` will be returned if `file` is not a file or doesn't exist
+/// relative to `src_path`.
+///
+/// `EvalError::OutputPathNotSpecified` if `out_path` is None.
+/// error variant would be returned.
+/// 
+pub fn process_path(file: &str, src_path: &PathBuf, out_path: &Option<&PathBuf>) -> EvalResult {
+    if out_path == &None {
+        return Err(EvalError::OutputPathNotSpecified)
+    }
+    let out_path = out_path.unwrap();
+    build_path(file, src_path, out_path)
 }
 
 fn build_path(file: &str, src_path: &Path, out_path: &Path) -> EvalResult {

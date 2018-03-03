@@ -19,6 +19,7 @@ pub enum EvalError {
     PathNotRelative(String),
     NotFile(String),
     NotContent(Output),
+    OutputPathNotSpecified,
 }
 impl PartialEq for EvalError {
     fn eq(&self, other: &EvalError) -> bool {
@@ -37,6 +38,7 @@ impl PartialEq for EvalError {
             (&EvalError::NotFile(ref l), &EvalError::NotFile(ref r)) => l == r,
             (&EvalError::NotContent(ref l),
              &EvalError::NotContent(ref r)) => l == r,
+            (&EvalError::OutputPathNotSpecified, &EvalError::OutputPathNotSpecified) => true,
             (_, _) => false,
         }
     }
@@ -59,7 +61,8 @@ impl Clone for EvalError {
             &EvalError::IOUnknown => EvalError::IOUnknown,
             &EvalError::PathNotRelative(ref x) => EvalError::PathNotRelative(x.clone()),
             &EvalError::NotFile(ref x) => EvalError::NotFile(x.clone()),
-            &EvalError::NotContent(ref x) => EvalError::NotContent(x.clone())
+            &EvalError::NotContent(ref x) => EvalError::NotContent(x.clone()),
+            &EvalError::OutputPathNotSpecified => EvalError::OutputPathNotSpecified,
         }
     }
 }
