@@ -277,4 +277,19 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
+    #[test]
+    fn test_tokenizing_html_works() {
+        let input = "html! html{ h1 \"test\" }";
+        let expected = vec![
+            Ok(Token::Keyword(0, Keyword::Html)),
+            Ok(Token::Id(6, "html".to_string())),
+            Ok(Token::BlockL(10)),
+            Ok(Token::Id(15, "h1".to_string())),
+            Ok(Token::Val(10, Val::String("test".to_string()))),
+            Ok(Token::BlockR(22))
+        ];
+
+        let actual: Vec<_> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
 }

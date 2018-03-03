@@ -56,4 +56,5 @@ pub enum Keyword {
     Import,
     Set,
     In,
+    Html,
 }

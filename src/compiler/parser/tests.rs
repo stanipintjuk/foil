@@ -229,5 +229,5 @@ fn parse_function_call() {
     let mut iter = input.iter().map(Clone::clone);
     let actual: Vec<_> = Parser::new(&mut iter).collect();
     assert_eq!(expected, actual);
-
 }
+

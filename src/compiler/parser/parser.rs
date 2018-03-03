@@ -36,6 +36,7 @@ impl<'i> Parser<'i> {
             Keyword::Import => self.parse_import(pos),
             Keyword::Set => self.parse_set(pos),
             Keyword::In => Some(Err(ParseError::UnexpectedKeyword(Keyword::In))),
+            Keyword::Html => unimplemented!(),
         }
     }
 
