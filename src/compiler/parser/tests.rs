@@ -264,3 +264,99 @@ fn parse_html_with_expression() {
     let actual: Vec<_> = Parser::new(&mut input).collect();
     assert_eq!(expected, actual);
 }
+
+#[test]
+fn parse_self_closing_tag_should_work() {
+    // html! br;
+    let input = vec![
+        Ok(Token::Keyword(0, Keyword::Html)),
+        Ok(Token::Id(0, "br".to_string())),
+        Ok(Token::Semi(0)),
+    ];
+    let mut input = input.iter().map(Clone::clone);
+
+    let expected = vec![
+        Ok(Ast::HtmlClosed{
+            tag_name: "br".to_string(),
+            attributes: vec![],
+        })
+    ];
+
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn parse_attributes_should_work() {
+    // Should be able to handle any number of 
+    // attributes.
+    // And attributes should be any kind of expression
+    // 
+    // html! div class="test" id=+ "div" 1;
+    let input = vec![
+        Token::Keyword(0, Keyword::Html),
+        Token::Id(0, "div".to_string()),
+        Token::Id(0, "class".to_string()),
+        Token::Assign(0),
+        Token::Val(0, Val::String("test".to_string())),
+        Token::Id(0, "id".to_string()),
+        Token::Assign(0),
+        Token::BinOp(0, BinOp::Add),
+        Token::Val(0, Val::String("div".to_string())),
+        Token::Val(0, Val::Int(1))
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = 
+        Ast::HtmlClosed{
+            tag_name: "div".to_string(),
+            attributes: 
+                vec![
+                    SetField {
+                        name: "class".to_string(),
+                        value: Ast::Val(Val::String("test".to_string())),
+                    },
+                    SetField {
+                        name: "id".to_string(),
+                        value: Ast::BinOp(
+                            BinOp::Add,
+                            Box::new(Ast::Val(Val::String("div".to_string()))),
+                            Box::new(Ast::Val(Val::Int(1)))
+                        ),
+                    }
+                ]
+        };
+    let expected = vec![Ok(expected)];
+
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+
+}
+
+#[test]
+fn parse_html_with_one_child_without_braces_should_work() {
+    // If an html element only has one child then no braces are required
+    // Example:
+    // html! h1 "test"
+    let input = vec![
+        Token::Keyword(0, Keyword::Html),
+        Token::Id(0, "h1".to_string()),
+        Token::Val(0, Val::String("test".to_string())),
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = vec![
+        Ok(
+            Ast::Html{
+                tag_name: "h1".to_string(),
+                attributes: vec![],
+                children: vec![
+                    Ast::Val(Val::String("test".to_string()))
+                ],
+                }
+        )
+    ];
+
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}

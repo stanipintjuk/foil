@@ -13,10 +13,18 @@ pub enum Ast {
     Call(Box<Ast>, Box<Ast>),
     Id(Id),
     Import(usize, String),
+
+    /// Represents an HTML element
     Html{
         tag_name: String, 
         attributes: Vec<SetField>,
         children: Vec<Ast>,
+    },
+
+    /// Represents a self-closing tag HTML element
+    HtmlClosed{
+        tag_name: String,
+        attributes: Vec<SetField>
     },
 }
 

@@ -64,6 +64,7 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             &Ast::Id(ref id) => self.eval_id(id),
             &Ast::Import(_, ref file_name) => self.eval_file(file_name),
             &Ast::Html{tag_name: _, attributes: _, children: _} => unimplemented!(),
+            &Ast::HtmlClosed{tag_name: _, attributes: _} => unimplemented!(),
         }
     }
 

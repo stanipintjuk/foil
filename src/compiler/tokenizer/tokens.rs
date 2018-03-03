@@ -14,6 +14,7 @@ pub enum Token {
     Comma(usize),
     Colon(usize),
     Assign(usize),
+    Semi(usize),
 }
 
 #[derive(PartialEq)]
