@@ -18,6 +18,7 @@ pub enum ParseError {
     ExpectedPath(Token),
     ExpectedColon(Token),
     ExpectedGroupR(Token),
+    ExpectedString(Token),
 }
 
 

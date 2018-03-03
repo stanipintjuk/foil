@@ -149,11 +149,11 @@ fn parse_let_test() {
 }
 
 #[test]
-fn parse_import_test() {
-    // import <path/to/file>
+fn parse_import_should_work_with_string() {
+    // import "path/to/file"
     let input = vec![
         Ok(Token::Keyword(0, Keyword::Import)),
-        Ok(Token::Val(2, Val::Path("path/to/file".to_string()))),
+        Ok(Token::Val(2, Val::String("path/to/file".to_string()))),
     ];
 
     let expected = vec![
@@ -163,7 +163,25 @@ fn parse_import_test() {
     let mut iter = input.iter().map(Clone::clone);
     let actual: Vec<_> = Parser::new(&mut iter).collect();
     assert_eq!(expected, actual);
+}
 
+#[test]
+fn parse_import_should_not_work_with_path() {
+    // import <path/to/file>
+    let input = vec![
+        Ok(Token::Keyword(0, Keyword::Import)),
+        Ok(Token::Val(2, Val::Path("path/to/file".to_string()))),
+    ];
+
+    let expected = vec![
+        Err(ParseError::ExpectedString(
+                Token::Val(2, Val::Path("path/to/file".to_string()))
+                )),
+    ];
+    
+    let mut iter = input.iter().map(Clone::clone);
+    let actual: Vec<_> = Parser::new(&mut iter).collect();
+    assert_eq!(expected, actual);
 }
 
 #[test]

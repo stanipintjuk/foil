@@ -74,11 +74,11 @@ impl<'i> Parser<'i> {
     fn parse_import(&mut self, pos: usize) -> Option<ParseResult> {
         let token = next_token!(self.token_iter, pos);
         match token {
-            Token::Val(pos, Val::Path(path)) => {
+            Token::Val(pos, Val::String(path)) => {
                 Some(Ok(Ast::Import(pos, path)))
             },
             token => {
-                Some(Err(ParseError::ExpectedPath(token)))
+                Some(Err(ParseError::ExpectedString(token)))
             }
         }
     }
