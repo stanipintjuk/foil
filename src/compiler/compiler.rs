@@ -6,14 +6,14 @@ use super::evaluator::{Evaluator, Output, EvalError, EvalResult, Scope, OpenScop
 use super::tokenizer::Tokenizer;
 use super::parser::Parser;
 
-pub fn evaluate_string(text: &str, file_path: &Path, out_path: &Path) -> EvalResult {
+pub fn evaluate_string(text: &str, file_path: &Path, out_dir: &Path) -> EvalResult {
     let mut tokenizer = Tokenizer::new(&text);
     let mut parser = Parser::new(&mut tokenizer);
     if let Some(parse_res) = parser.next() {
         match parse_res {
             Ok(ast) => {
                 let scope = OpenScope::new();
-                Evaluator::with_file(&ast, Scope::Open(&scope), file_path.to_owned(), out_path.to_owned()).eval()
+                Evaluator::with_file(&ast, Scope::Open(&scope), file_path.to_owned(), out_dir.to_owned()).eval()
             },
             Err(err) => Err(EvalError::Parser(err)),
         }
@@ -22,8 +22,15 @@ pub fn evaluate_string(text: &str, file_path: &Path, out_path: &Path) -> EvalRes
     }
 }
 
-pub fn evaluate_file(file_path: &Path, out_path: &Path) -> EvalResult  {
-    let mut f = File::open(&file_path).unwrap();
+/// Reads the file `file_path` and evaluates it's contents.
+/// Returns `EvalError::NotFile` if the file could not be opened.
+pub fn evaluate_file(file_path: &Path, out_dir: &Path) -> EvalResult  {
+    let mut f = match File::open(&file_path) {
+        Ok(f) => f,
+        Err(_err) => {
+            return Err(EvalError::NotFile(file_path.to_str().unwrap_or("None").to_string()));
+        }
+    };
     let mut contents = String::new();
 
     let read_res = f.read_to_string(&mut contents);
@@ -31,7 +38,7 @@ pub fn evaluate_file(file_path: &Path, out_path: &Path) -> EvalResult  {
         return Err(EvalError::IO(err));
     }
 
-    evaluate_string(&contents, &file_path, &out_path)
+    evaluate_string(&contents, &file_path, &out_dir)
 }
 
 pub fn write_to_file(text: &str, path: &Path) -> EvalResult {

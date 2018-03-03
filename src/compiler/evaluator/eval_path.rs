@@ -10,13 +10,13 @@ use std::ffi::OsStr;
 /// `out_path` - the directory to  which the processed file would be copied.
 /// 
 /// # Errors
-/// `EvalError::NotAFile(String)` will be returned if `file` is not a file or doesn't exist
+/// `EvalError::NotFile(String)` will be returned if `file` is not a file or doesn't exist
 /// relative to `src_path`.
 ///
 /// `EvalError::OutputPathNotSpecified` if `out_path` is None.
 /// error variant would be returned.
 /// 
-pub fn process_path(file: &str, src_path: &PathBuf, out_path: &Option<&PathBuf>) -> EvalResult {
+pub fn process_path(file: &str, src_path: &Path, out_path: &Option<&Path>) -> EvalResult {
     if out_path == &None {
         return Err(EvalError::OutputPathNotSpecified)
     }
@@ -35,7 +35,9 @@ fn build_path(file: &str, src_path: &Path, out_path: &Path) -> EvalResult {
     let file_path = src_path.join(&file_path);
 
     if !file_path.is_file() {
-        return Err(EvalError::NotFile(file.to_string()));
+        let full_path = src_path.join(file);
+        let full_path = full_path.to_str().unwrap();
+        return Err(EvalError::NotFile(full_path.to_string()));
     }
 
     // if extension is "foil" then build the file

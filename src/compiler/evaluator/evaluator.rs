@@ -1,4 +1,4 @@
-use std::path::{PathBuf};
+use std::path::{PathBuf, Path};
 use std::collections::HashMap;
 
 use compiler;
@@ -67,7 +67,7 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     }
 
     fn eval_file(&self, file_name: &str) -> EvalResult {
-        let mut file = if let Some(ref file_path) = self.file_path {
+        let file = if let Some(ref file_path) = self.file_path {
             let mut file = file_path.clone();
             file.pop();
             file
@@ -76,18 +76,13 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             file
         };
 
-        let mut out_file = if let Some(ref out_path) = self.out_path {
-            let mut file = out_path.clone();
-            file.pop();
-            file
-        } else {
-            let mut file = PathBuf::from("./");
-            file
-        };
+        let fall_back_out_dir = PathBuf::from("./");
+        let out_dir = self.out_path
+            .as_ref()
+            .unwrap_or(&fall_back_out_dir);
 
-        file.push(file_name);
-        out_file.push(file_name);
-        compiler::evaluate_file(&file, &out_file)
+        let file = file.join(file_name);
+        compiler::evaluate_file(&file, out_dir)
     }
 
     fn eval_fn(&self, param: &str, expr: &Ast) -> EvalResult {
@@ -108,12 +103,21 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
 
     fn eval_val(&self, val: &Val) -> EvalResult {
         let fall_back_dir = PathBuf::from("./");
-        let working_dir = self.file_path.as_ref().unwrap_or(&fall_back_dir);
+        let working_dir: &Path = self.file_path
+            .as_ref()
+            .map(PathBuf::as_path)
+            .and_then(Path::parent)
+            .unwrap_or(&fall_back_dir);
+
+        let out_path: &Option<&Path> = &self.out_path
+            .as_ref()
+            .map(PathBuf::as_path);
+
         match val {
             &Val::Int(v) => Ok(Output::Int(v)),
             &Val::Double(v) => Ok(Output::Double(v)),
             &Val::String(ref v) => Ok(Output::String(v.to_string())),
-            &Val::Path(ref v) => process_path(v, working_dir, &self.out_path.as_ref()),
+            &Val::Path(ref v) => process_path(v, working_dir, out_path),
             &Val::Bool(ref b) => Ok(Output::Bool(*b)),
         }
     }

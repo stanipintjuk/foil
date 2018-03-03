@@ -276,4 +276,5 @@ mod tests {
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
+
 }

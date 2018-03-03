@@ -1,6 +1,11 @@
+use tempdir::TempDir;
+use std::io::{Write};
+use std::fs::{File, create_dir_all};
+
 use super::evaluator::Evaluator;
 use super::output::Output;
 use super::scope::{OpenScope, Scope};
+use super::error::EvalError;
 
 use compiler::parser::ast::{Ast, SetField, Id};
 use compiler::tokenizer::tokens::{Val, BinOp};
@@ -208,10 +213,6 @@ fn shadowing_in_closure_works() {
 
 #[test]
 fn import_works() {
-    use tempdir::TempDir;
-    use std::io::{Write};
-    use std::fs::{File, create_dir_all};
-
     let tmpdir = TempDir::new("test").unwrap();
     create_dir_all(tmpdir.path()).unwrap();
 
@@ -231,5 +232,58 @@ fn import_works() {
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
     let actual = Evaluator::with_file(&input, Scope::Open(&scope), import_file.to_path_buf(), out_file.to_path_buf()).eval();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn import_should_return_NotFile_error_for_non_existing_paths() {
+    // Prepare env
+    let tmp_working_dir = TempDir::new("src").unwrap();
+    create_dir_all(tmp_working_dir.path());
+    let tmp_working_dir = tmp_working_dir.path().to_path_buf();
+
+    let tmp_out_dir = TempDir::new("out").unwrap();
+    create_dir_all(tmp_out_dir.path());
+    let tmp_out_dir = tmp_out_dir.path().to_path_buf();
+
+    // Prepare input
+    let file_name = "doesnt_exist.foil";
+    let import_expr = Ast::Import(0, file_name.to_string());
+
+    // Prepare expected
+    let full_path = tmp_working_dir.join(file_name);
+    let expected = Err(EvalError::NotFile(full_path.to_str().unwrap().to_string()));
+    
+    // Prepare actual result
+    let scope = OpenScope::new();
+    let actual = Evaluator::with_file(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
+
+    assert_eq!(expected, actual);
+}
+
+#[allow(non_snake_case)]
+#[test]
+fn should_return_NotFile_error_for_non_existing_Path_expression() {
+    // Prepare environment
+    let tmp_working_dir = TempDir::new("src").unwrap();
+    create_dir_all(tmp_working_dir.path());
+    let tmp_working_dir = tmp_working_dir.path().to_path_buf();
+
+    let tmp_out_dir = TempDir::new("out").unwrap();
+    create_dir_all(tmp_out_dir.path());
+    let tmp_out_dir = tmp_out_dir.path().to_path_buf();
+    
+    // Prepare Input
+    let file_name = "doesnt_exist.foil";
+    let import_expr = Ast::Val(Val::Path(file_name.to_string()));
+    
+    // Prepare expected output
+    let full_path = tmp_working_dir.join(file_name);
+    let expected = Err(EvalError::NotFile(full_path.to_str().unwrap().to_string()));
+    
+    // Prepare actual output
+    let scope = OpenScope::new();
+    let actual = Evaluator::with_file(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
+
     assert_eq!(expected, actual);
 }
