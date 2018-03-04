@@ -2,16 +2,11 @@ extern crate foil;
 extern crate fs_extra;
 extern crate tempdir;
 use tempdir::TempDir;
-use foil::builder::{build_dir, BuildError};
-use foil::grammar::ParseError;
 use std::path::{Path, PathBuf};
 use std::env;
-use std::io::{Error as IOError};
-use fs_extra::error::Error as FsError;
 use fs_extra::dir;
 use std::fs::{create_dir_all};
 use foil::compiler::build_file;
-use foil::compiler::evaluator::EvalError;
 
 fn main() {
     let param = get_parameter();
@@ -85,13 +80,3 @@ fn get_parameter() -> Option<String> {
     }
 }
 
-fn print_invalid_paths(paths: &Vec<(String, usize)>) {
-    eprintln!("Found invalid paths:");
-    for &(ref path, ref position) in paths {
-        eprintln!("`{}` on position {}", path, position)
-    }
-}
-
-fn print_html_parse_error(err: &EvalError) {
-    eprint!("Error: {:?}", err);
-}
