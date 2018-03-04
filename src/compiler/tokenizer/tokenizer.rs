@@ -102,7 +102,6 @@ impl<'a> Tokenizer<'a> {
         };
         self.pos += matched.end();
         Some(Ok(token))
-        
     }
 
     fn lex_numlit(&mut self) -> Option<TokenResult> {
@@ -119,11 +118,13 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn lex_html_keyword(&mut self) -> Option<TokenResult> {
-        if &self.buf[self.pos..self.pos+5] == "html!" {
-            token!(Token::Keyword => Keyword::Html, self=>5)
+    fn is_html_keyword(&self) -> bool {
+        if self.pos+5 >= self.buf.len() {
+            false
+        } else if &self.buf[self.pos..self.pos+5] == "html!" {
+            true
         } else {
-            self.lex_bareword()
+            false
         }
     }
 
@@ -159,11 +160,12 @@ impl<'a> Iterator for Tokenizer<'a> {
             '}' => token!(Token::BlockR, self=>1),
             ',' => token!(Token::Comma, self=>1),
             ':' => token!(Token::Colon, self=>1),
+            ';' => token!(Token::Semi, self=>1),
             '=' => self.lex_assign_or_equals(),
             '*' => self.lex_mul_or_pow(),
             '"' => self.lex_strlit(),
             '<' => self.lex_pathlit(),
-            'h' => self.lex_html_keyword(),
+            'h' if self.is_html_keyword() => token!(Token::Keyword => Keyword::Html, self=>5),
             x if x.is_alphabetic() => self.lex_bareword(),
             x if x.is_numeric() => self.lex_numlit(),
             _ => Some(self.garbage()),
@@ -276,10 +278,11 @@ mod tests {
 
     #[test]
     fn test_punctuation() {
-        let input = ", :";
+        let input = ", : ;";
         let expected = vec![
             Ok(Token::Comma(0)),
             Ok(Token::Colon(2)),
+            Ok(Token::Semi(4)),
         ];
 
         let actual: Vec<_> = Tokenizer::new(input).collect();
@@ -298,6 +301,19 @@ mod tests {
             Ok(Token::BlockR(22))
         ];
 
+        let actual: Vec<_> = Tokenizer::new(input).collect();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn should_not_panic_if_html_keyword_is_not_complete() {
+        // the `html!` keyword is a special case for this tokenizer and might panic if the keyword
+        // starts but doesn't end after 5 characters.
+        
+        let input = "h";
+        let expected = vec![
+            Ok(Token::Id(0, "h".to_string())),
+        ];
         let actual: Vec<_> = Tokenizer::new(input).collect();
         assert_eq!(expected, actual);
     }
