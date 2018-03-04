@@ -236,6 +236,7 @@ fn import_works() {
 }
 
 #[test]
+#[allow(non_snake_case)]
 fn import_should_return_NotFile_error_for_non_existing_paths() {
     // Prepare env
     let tmp_working_dir = TempDir::new("src").unwrap();
@@ -261,8 +262,8 @@ fn import_should_return_NotFile_error_for_non_existing_paths() {
     assert_eq!(expected, actual);
 }
 
-#[allow(non_snake_case)]
 #[test]
+#[allow(non_snake_case)]
 fn should_return_NotFile_error_for_non_existing_Path_expression() {
     // Prepare environment
     let tmp_working_dir = TempDir::new("src").unwrap();
@@ -287,3 +288,121 @@ fn should_return_NotFile_error_for_non_existing_Path_expression() {
 
     assert_eq!(expected, actual);
 }
+
+#[test]
+fn should_evaluate_html_tag_correctly() {
+    let input = Ast::Html{
+        tag_name: "html".to_string(),
+        attributes: vec![],
+        children: vec![]
+    };
+
+    let expected = Ok(Output::String("<html></html>".to_string()));
+
+    let scope = OpenScope::new();
+    let actual = Evaluator::new(&input,  Scope::Open(&scope)).eval();
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_evaluate_html_attributes_correctly() {
+    // div class="test" id=1 {}
+    // should become
+    // <div class="test" id="1"></div>
+
+    let input = Ast::Html{
+        tag_name: "div".to_string(),
+        attributes: vec![
+            SetField{
+                name: "class".to_string(),
+                value: Ast::Val(Val::String("test".to_string()))
+            },
+            SetField{
+                name: "id".to_string(),
+                value: Ast::Val(Val::Int(1)),
+            },
+        ],
+        children: vec![],
+    };
+
+    let expected = Ok(Output::String("<div class=\"test\" id=\"1\"></div>".to_string()));
+
+    let scope =  OpenScope::new();
+    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_evaluate_html_children_correctly() {
+    // div p {} "test"
+    // should become
+    // <div><p></p>test</div>
+    
+    let input = Ast::Html{
+        tag_name: "div".to_string(),
+        attributes: vec![],
+        children: vec![
+            Ast::Html{
+                tag_name: "p".to_string(),
+                attributes: vec![],
+                children: vec![],
+            },
+            Ast::Val(Val::String("test".to_string())),
+        ],
+    };
+
+    let expected = Ok(Output::String("<div><p></p>test</div>".to_string()));
+
+    let scope = OpenScope::new();
+    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_evaluate_selfclosing_tag_correctly() {
+    // br;
+    // should become
+    // <br/>
+    let input = Ast::HtmlClosed {
+        tag_name: "br".to_string(),
+        attributes: vec![],
+    };
+
+    let expected = Ok(Output::String("<br/>".to_string()));
+
+    let scope = OpenScope::new();
+    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_evaluate_attributes_for_selfclosing_tags_correctly() {
+    // link rel="stylesheet" type="text/css";
+    // should become
+    // <link rel="stylesheet" type="text/css"/>
+    let input = Ast::HtmlClosed {
+        tag_name: "link".to_string(),
+        attributes: vec![
+            SetField{
+                name: "rel".to_string(),
+                value: Ast::Val(Val::String("stylesheet".to_string())),
+            },
+            SetField{
+                name: "type".to_string(),
+                value: Ast::Val(Val::String("text/css".to_string())),
+            },
+        ],
+    };
+
+    let expected = Ok(Output::String("<link rel=\"stylesheet\" type=\"text/css\"/>".to_string()));
+
+    let scope = OpenScope::new();
+    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    
+    assert_eq!(expected, actual);
+}
+
