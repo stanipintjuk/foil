@@ -303,7 +303,8 @@ fn parse_attributes_should_work() {
         Token::Assign(0),
         Token::BinOp(0, BinOp::Add),
         Token::Val(0, Val::String("div".to_string())),
-        Token::Val(0, Val::Int(1))
+        Token::Val(0, Val::Int(1)),
+        Token::Semi(0),
     ];
     let mut input = input.iter().map(Clone::clone).map(Ok);
 

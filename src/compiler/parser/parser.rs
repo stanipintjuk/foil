@@ -5,11 +5,12 @@ use compiler::tokenizer::{TokenIterator, TokenResult};
 
 use super::ast::{Ast, Id, SetField};
 use super::error::ParseError;
+use super::html_parser::parse_html;
 
 pub type ParseResult = Result<Ast, ParseError>;
 
 pub struct Parser<'i> {
-    token_iter: &'i mut TokenIterator<'i>,
+    pub token_iter: &'i mut TokenIterator<'i>,
 }
 impl<'i> Parser<'i> {
 
@@ -36,7 +37,7 @@ impl<'i> Parser<'i> {
             Keyword::Import => self.parse_import(pos),
             Keyword::Set => self.parse_set(pos),
             Keyword::In => Some(Err(ParseError::UnexpectedKeyword(Keyword::In))),
-            Keyword::Html => self.parse_html(pos),
+            Keyword::Html => parse_html(self, pos),
         }
     }
 
