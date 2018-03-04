@@ -1,6 +1,6 @@
 [package]
 name = "foil"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Stani <stanislav.pintjuk@gmail.com>"]
 homepage = "foil.stani.se"
 

@@ -266,6 +266,40 @@ fn parse_html_with_expression() {
 }
 
 #[test]
+fn parse_html_with_child_should_work() {
+    // Testing with this input:
+    // html! body { h1 "test" }
+    let input = vec![
+        Token::Keyword(0, Keyword::Html),
+        Token::Id(0, "body".to_string()),
+        Token::BlockL(0),
+        Token::Id(0, "h1".to_string()),
+        Token::Val(0, Val::String("test".to_string())),
+        Token::BlockR(0),
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = vec![
+        Ok(Ast::Html{
+            tag_name: "body".to_string(),
+            attributes: vec![],
+            children: vec![
+                Ast::Html{
+                    tag_name: "h1".to_string(),
+                    attributes: vec![],
+                    children: vec![
+                        Ast::Val(Val::String("test".to_string()))
+                    ]
+                }
+            ],
+        })
+    ];
+
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}
+
+#[test]
 fn parse_self_closing_tag_should_work() {
     // html! br;
     let input = vec![

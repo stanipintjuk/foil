@@ -1,17 +1,11 @@
 extern crate foil;
 extern crate fs_extra;
-extern crate tempdir;
-use tempdir::TempDir;
 use foil::builder::{build_dir, BuildError};
 use foil::grammar::ParseError;
 use std::path::{Path, PathBuf};
 use std::env;
 use std::io::{Error as IOError};
 use fs_extra::error::Error as FsError;
-use fs_extra::dir;
-use std::fs::{create_dir_all};
-use foil::compiler::build_file;
-use foil::compiler::evaluator::EvalError;
 
 fn main() {
     let param = get_parameter();
@@ -23,30 +17,17 @@ fn main() {
 
     let path = to_src_root_path(&param);
     if path == None {
-        eprint!("`{}` is not a file", param);
+        eprint!("`{}` is not a directory", param);
         return;
     }
-    let index_file = path.unwrap();
-    let out_root = get_out_path();
-    let tmp_out_dir = TempDir::new("out").unwrap();
-    let tmp_out_dir = tmp_out_dir.path();
+    let src_root = path.unwrap();
 
-    let result = build_file(&index_file, &tmp_out_dir);
+    let out_root = get_out_path();
+
+    let result = build_dir(src_root, out_root);
     match result {
-        Ok(()) => {
-            println!("Copying to output path...");
-            create_dir_all(&out_root);
-            let opts = dir::CopyOptions { 
-                overwrite: true, 
-                buffer_size: 64000,
-                skip_exist: false,
-                copy_inside: true,
-                depth: 0
-            };
-            dir::copy(tmp_out_dir, out_root, &opts).unwrap();
-            print_build_success();
-        },
-        Err(err) => println!("{:?}", err),
+        Ok(()) => print_build_success(),
+        Err(err) => print_build_error(&err),
     }
 
 }
@@ -55,12 +36,29 @@ fn print_build_success() {
     println!("Build successfull!");
 }
 
+fn print_build_error(err: &BuildError) {
+    match err {
+        &BuildError::IO(ref err) => print_io_error(err),
+        &BuildError::FsError(ref err) => print_fs_error(err),
+        &BuildError::Parser(ref err) => print_html_parse_error(err),
+        &BuildError::InvalidPaths(ref paths) => print_invalid_paths(paths)
+    }
+}
+
+fn print_io_error(err: &IOError) {
+    eprintln!("IOError: {}", err);
+}
+
+fn print_fs_error(err: &FsError) {
+    eprintln!("FsError: {}", err);
+}
+
 fn print_usage() {
-    eprintln!("Usage: foil [path/to/index.foil]");
+    eprintln!("Usage: foil [path/to/source/dir]");
 }
 
 fn get_out_path() -> PathBuf {
-    env::current_dir().unwrap().join(Path::new("./"))
+    env::current_dir().unwrap().join(Path::new("out"))
 }
 
 fn to_src_root_path(s: &str) -> Option<PathBuf> {
@@ -69,7 +67,7 @@ fn to_src_root_path(s: &str) -> Option<PathBuf> {
         p = env::current_dir().unwrap().join(p.clone())
     }
 
-    if !p.exists() || !p.is_file() {
+    if !p.exists() || !p.is_dir() {
         None
     } else {
         Some(p)
@@ -92,6 +90,9 @@ fn print_invalid_paths(paths: &Vec<(String, usize)>) {
     }
 }
 
-fn print_html_parse_error(err: &EvalError) {
-    eprint!("Error: {:?}", err);
+fn print_html_parse_error(err: &ParseError) {
+    eprint!("Error on line {}. Expected one of {:?} on position {}", 
+            err.line,
+            err.expected,
+            err.column) 
 }

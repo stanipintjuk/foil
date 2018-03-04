@@ -336,7 +336,7 @@ fn should_evaluate_html_attributes_correctly() {
 
 #[test]
 fn should_evaluate_html_children_correctly() {
-    // div p {} "test"
+    // div { p {} "test" } 
     // should become
     // <div><p></p>test</div>
     

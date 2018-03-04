@@ -79,7 +79,14 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     fn eval_html(&self, tag_name: &str, attributes: &Vec<SetField>, children: &Vec<Ast>) -> EvalResult {
         let children = children
             .iter()
-            .map(|child|{ Evaluator::new(&child, self.scope.clone()).eval() })
+            .map(|child|{ 
+                Evaluator{
+                    expr: &child, 
+                    scope: self.scope.clone(), 
+                    file_path: self.file_path.clone(), 
+                    out_path: self.out_path.clone()
+                }.eval() 
+            })
             .fold(Ok("".to_string()), |out_str, eval_res| {
                 if let Err(err) = eval_res {
                     Err(err)
@@ -108,7 +115,12 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
         let attributes = attributes
             .iter()
             .map(|field|{ 
-                (&field.name, Evaluator::new(&field.value, self.scope.clone()).eval())
+                (&field.name, Evaluator{
+                    expr: &field.value,
+                    scope: self.scope.clone(),
+                    file_path: self.file_path.clone(),
+                    out_path: self.out_path.clone(),
+                }.eval())
             })
         .fold(Ok("".to_string()), 
               |out_str, (name, eval_res)| {
@@ -152,7 +164,13 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     }
 
     fn eval_call(&self, func: &'ast Ast,  input: &'ast Ast) -> EvalResult {
-        let func = Evaluator::new(func, self.scope.clone()).eval();
+        let func = Evaluator{
+            expr: func,
+            scope:  self.scope.clone(),
+            file_path: self.file_path.clone(),
+            out_path: self.out_path.clone(),
+        }.eval();
+
         if let Ok(Output::Fn(func)) = func {
             func.eval(input)
         } else if let Ok(not_func) = func {
@@ -174,6 +192,7 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
         let out_path: &Option<&Path> = &self.out_path
             .as_ref()
             .map(PathBuf::as_path);
+
 
         match val {
             &Val::Int(v) => Ok(Output::Int(v)),
@@ -207,9 +226,19 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
 
     fn eval_let(&self, field: &SetField, child_expr: &Ast) -> EvalResult {
         let mut map: HashMap<&str, _> = HashMap::new();
-        map.insert(&field.name, Evaluator::new(&field.value, self.scope.clone()));
+        map.insert(&field.name, Evaluator{
+            scope: self.scope.clone(),
+            expr: &field.value,
+            out_path: self.out_path.clone(),
+            file_path: self.file_path.clone()
+        });
         let child_scope = OpenScope{ parent: Some(self.scope.clone()), map: map};
-        let eval = Evaluator::new(child_expr, Scope::Open(&child_scope));
+        let eval = Evaluator{
+            scope: Scope::Open(&child_scope),
+            expr: child_expr,
+            file_path: self.file_path.clone(),
+            out_path: self.out_path.clone(),
+        };
         eval.eval()
     }
 }

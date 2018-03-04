@@ -126,6 +126,7 @@ fn parse_html_child(parser: &mut Parser, pos: usize, token: Token) -> Option<Res
             expect_group_r!(parser.token_iter, pos);
             all_ok(expr)
         }
+        Token::Id(pos, tag_name) => parse_html_tag_contents(parser, tag_name, pos),
         other_token => Some(Err(ParseError::Unexpected(other_token))),
     }
 }

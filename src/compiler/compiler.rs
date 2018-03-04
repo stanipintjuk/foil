@@ -41,6 +41,27 @@ pub fn evaluate_file(file_path: &Path, out_dir: &Path) -> EvalResult  {
     evaluate_string(&contents, &file_path, &out_dir)
 }
 
+pub fn build_file(file_path: &Path, out_dir: &Path) -> Result<(), EvalError>  {
+    let res = evaluate_file(file_path, out_dir);
+    match res {
+        Ok(output) => {
+            match output.to_string() {
+                Ok(output) => {
+                    let mut out_index_file = out_dir.join(file_path.file_stem().unwrap());   
+                    out_index_file.set_extension("html");
+                    let outstr = format!("{}", output);
+                    write_to_file(&outstr, &out_index_file);
+                    Ok(())
+                },
+                Err(err) => {
+                    return Err(err);
+                }
+            }
+        },
+        Err(err) => Err(err),
+    }
+}
+
 pub fn write_to_file(text: &str, path: &Path) -> EvalResult {
     let mut f = match File::create(&path) {
         Ok(f) => f,
