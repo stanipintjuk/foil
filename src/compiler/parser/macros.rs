@@ -8,7 +8,7 @@ macro_rules! expect_expression {
                 return Some(Err(err));
             }
             None => {
-                return Some(Err(ParseError::ExpectedExpression($pos)));
+                return Some(Err(ParseError::UnexpectedEndOfCode($pos)));
             }
         }
     }

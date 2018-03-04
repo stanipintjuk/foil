@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter, self};
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
@@ -30,6 +32,20 @@ pub enum BinOp {
     Equals,
 }
 
+impl Display for BinOp {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            &BinOp::Add => write!(f, "+"),
+            &BinOp::Sub => write!(f, "-"),
+            &BinOp::Mul => write!(f, "*"),
+            &BinOp::Div => write!(f, "/"),
+            &BinOp::Mod => write!(f, "%"),
+            &BinOp::Pow => write!(f, "**"),
+            &BinOp::Equals => write!(f, "=="),
+        }
+    }
+}
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
@@ -46,6 +62,18 @@ pub enum Val {
     String(String),
     Path(String),
     Bool(bool),
+}
+
+impl Display for Val {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            &Val::Int(ref x) => write!(f, "{}", x),
+            &Val::Double(ref x) => write!(f, "{}", x),
+            &Val::String(ref x) => write!(f, "\"{}\"", x),
+            &Val::Path(ref x) => write!(f, "<{}>", x),
+            &Val::Bool(ref x) => write!(f, "{}", x),
+        }
+    }
 }
 
 #[derive(PartialEq)]

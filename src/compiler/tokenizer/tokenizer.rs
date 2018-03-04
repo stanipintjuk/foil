@@ -119,7 +119,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn is_html_keyword(&self) -> bool {
-        if self.pos+5 >= self.buf.len() {
+        if self.pos+5 > self.buf.len() {
             false
         } else if &self.buf[self.pos..self.pos+5] == "html!" {
             true

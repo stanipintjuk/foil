@@ -361,3 +361,40 @@ fn parse_html_with_one_child_without_braces_should_work() {
     let actual: Vec<_> = Parser::new(&mut input).collect();
     assert_eq!(expected, actual);
 }
+
+#[test]
+fn should_return_UnexpectedEndOfCode_for_incomplete_binary_operator() {
+    let input = vec![
+        Token::BinOp(0, BinOp::Add)
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = vec![Err(ParseError::UnexpectedEndOfCode(0))];
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_return_UnexpectedEndOfCode_for_incomplete_html_statement() {
+    let input = vec![
+        Token::Keyword(0, Keyword::Html),
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = vec![Err(ParseError::UnexpectedEndOfCode(0))];
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}
+
+#[test]
+fn should_return_UnexpectedEndOfCode_for_incomplete_html_statement2() {
+    let input = vec![
+        Token::Keyword(0, Keyword::Html),
+        Token::Id(7, "h1".to_string()),
+    ];
+    let mut input = input.iter().map(Clone::clone).map(Ok);
+
+    let expected = vec![Err(ParseError::UnexpectedEndOfCode(7))];
+    let actual: Vec<_> = Parser::new(&mut input).collect();
+    assert_eq!(expected, actual);
+}
