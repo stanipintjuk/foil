@@ -1,5 +1,5 @@
 use std::path::{PathBuf, Path};
-use std::collections::HashMap;
+use std::collections::{HashMap};
 
 use compiler;
 
@@ -57,15 +57,75 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
             &Ast::BinOp(ref binop, ref left, ref right) => 
                 self.eval_binary_op(binop, left, right),
             &Ast::Val(ref val) => self.eval_val(val),
-            &Ast::Set(_) => panic!("Evaluation for set is not implemented"),
+            &Ast::Set(_) => panic!("Evaluation of sets is not implemented"),
             &Ast::Let(ref field, ref child_expr) => self.eval_let(field, child_expr),
             &Ast::Fn(ref param, ref expr) => self.eval_fn(param, expr),
             &Ast::Call(ref func, ref input) => self.eval_call(func, input),
             &Ast::Id(ref id) => self.eval_id(id),
             &Ast::Import(_, ref file_name) => self.eval_file(file_name),
-            &Ast::Html{tag_name: _, attributes: _, children: _} => unimplemented!(),
-            &Ast::HtmlClosed{tag_name: _, attributes: _} => unimplemented!(),
+            &Ast::Html{ref tag_name, ref attributes, ref children} => self.eval_html(tag_name, attributes, children),
+            &Ast::HtmlClosed{ref tag_name, ref attributes} => self.eval_html_closed(tag_name, attributes),
         }
+    }
+
+    fn eval_html_closed(&self, tag_name: &str, attributes: &Vec<SetField>) -> EvalResult {
+        let attributes = self.eval_attributes(attributes);
+        match attributes {
+            Ok(attributes) => Ok(Output::String(format!("<{}{}/>", tag_name, attributes))),
+            Err(err) => Err(err),
+        }
+    }
+
+    fn eval_html(&self, tag_name: &str, attributes: &Vec<SetField>, children: &Vec<Ast>) -> EvalResult {
+        let children = children
+            .iter()
+            .map(|child|{ Evaluator::new(&child, self.scope.clone()).eval() })
+            .fold(Ok("".to_string()), |out_str, eval_res| {
+                if let Err(err) = eval_res {
+                    Err(err)
+                } else if let Err(err) = out_str {
+                    Err(err)
+                } else {
+                    let child = eval_res.unwrap();
+                    let out_str = out_str.unwrap();
+                    match child.to_string() {
+                        Ok(child) => Ok(format!("{}{}", out_str, child)),
+                        Err(err) => Err(err),
+                    }
+                }
+            });
+
+        let attributes = self.eval_attributes(attributes);
+
+        match (children, attributes) {
+            (Ok(children), Ok(attributes)) => Ok(Output::String(format!("<{}{}>{}</{}>", tag_name, attributes, children, tag_name))),
+            (_, Err(err)) => Err(err),
+            (Err(err), _) => Err(err),
+        }
+    }
+
+    fn eval_attributes(&self, attributes: &Vec<SetField>) -> Result<String, EvalError> {
+        let attributes = attributes
+            .iter()
+            .map(|field|{ 
+                (&field.name, Evaluator::new(&field.value, self.scope.clone()).eval())
+            })
+        .fold(Ok("".to_string()), 
+              |out_str, (name, eval_res)| {
+                  if let Err(err) = out_str {
+                      Err(err)
+                  } else if let Err(err) = eval_res {
+                      Err(err)
+                  } else {
+                      let eval_res = eval_res.unwrap();
+                      let out_str = out_str.unwrap();
+                      match eval_res.to_string() {
+                          Ok(val) => Ok(format!("{} {}=\"{}\"", out_str, name, val)),
+                          Err(err) => Err(err),
+                      }
+                  }
+              });
+        attributes
     }
 
     fn eval_file(&self, file_name: &str) -> EvalResult {

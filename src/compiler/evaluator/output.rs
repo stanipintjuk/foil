@@ -16,12 +16,20 @@ pub enum Output {
 }
 
 impl Output {
-    pub fn to_content(self) -> Result<String, EvalError> {
+    pub fn to_string(self) -> Result<String, EvalError> {
         match self {
             Output::Int(x) => Ok(format!("{}", x)),
             Output::Bool(x) => Ok(format!("{}", x)),
             Output::String(x) => Ok(x),
-            non_content => Err(EvalError::NotContent(non_content)),
+            non_content => Err(EvalError::NotStringable(non_content)),
+        }
+    }
+
+    pub fn is_stringable(&self) -> bool {
+        match self {
+            &Output::Int(_) | &Output::Double(_) | 
+            &Output::Bool(_) | &Output::String(_) => true,
+            &Output::Fn(_) => false,
         }
     }
 }

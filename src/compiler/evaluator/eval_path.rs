@@ -45,7 +45,7 @@ fn build_path(file: &str, src_path: &Path, out_path: &Path) -> EvalResult {
     if Some(OsStr::new("foil")) == file_path.extension() {
         let out_file_path = out_file_path.with_extension("html");
         evaluate_file(&file_path, &out_file_path)
-            .and_then(Output::to_content)
+            .and_then(Output::to_string)
             .and_then(|text| { 
                 write_to_file(&text, &out_file_path) 
             })
