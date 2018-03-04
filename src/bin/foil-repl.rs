@@ -6,7 +6,13 @@ use foil::compiler::evaluator::{Evaluator, Scope, OpenScope, EvalResult, EvalErr
 use std::io::{self, BufRead};
 use std::io::prelude::*;
 
+const FOIL_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const FOIL_AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+const FOIL_HOMEPAGE: &'static str = env!("CARGO_PKG_HOMEPAGE");
+
 fn main() {
+    println!("Foil version {} {}", FOIL_VERSION, FOIL_HOMEPAGE);
+    println!("Contact authors: {}", FOIL_AUTHORS);
     let stdin = io::stdin();
     let mut cmd = "".to_string();
 
