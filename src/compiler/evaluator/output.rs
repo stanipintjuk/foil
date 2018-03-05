@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-use compiler::parser::ast::{Ast};
-use super::scope::{OpenScope, ClosedScope, Scope};
-use super::evaluator::{Evaluator, EvalResult};
 use super::error::EvalError;
+use super::closure::Closure;
 use std::fmt::{Display, Formatter, self};
 
+/// Represents the output of an evaluated expression tree.
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
@@ -17,6 +15,17 @@ pub enum Output {
 }
 
 impl Output {
+    /// Returns `true` if this value is allowed to be returned where strings are expected. I.e.
+    /// when adding with a string or in Html bodies.
+    /// If this returns true then `Output::to_string` should succeed.
+    pub fn is_stringable(&self) -> bool {
+        match self {
+            &Output::Int(_) | &Output::Double(_) | 
+            &Output::Bool(_) | &Output::String(_) => true,
+            &Output::Fn(_) => false,
+        }
+    }
+
     pub fn to_string(self) -> Result<String, EvalError> {
         match self {
             Output::Int(x) => Ok(format!("{}", x)),
@@ -24,14 +33,6 @@ impl Output {
             Output::Bool(x) => Ok(format!("{}", x)),
             Output::String(x) => Ok(x),
             non_content => Err(EvalError::NotStringable(non_content)),
-        }
-    }
-
-    pub fn is_stringable(&self) -> bool {
-        match self {
-            &Output::Int(_) | &Output::Double(_) | 
-            &Output::Bool(_) | &Output::String(_) => true,
-            &Output::Fn(_) => false,
         }
     }
 }
@@ -48,34 +49,3 @@ impl Display for Output {
     }
 }
 
-#[derive(PartialEq)]
-#[derive(Debug)]
-#[derive(Clone)]
-pub struct Closure {
-    param_name: String,
-    expr: Ast,
-    scope: ClosedScope,
-}
-
-impl Closure {
-    pub fn new(param_name: String, expr: Ast, scope: ClosedScope) -> Self {
-        Closure{
-            param_name: param_name,
-            scope: scope, 
-            expr: expr
-        }
-    }
-
-    pub fn eval(&self, param_value: &Ast) -> EvalResult {
-        let mut map: HashMap<&str, _> = HashMap::new();
-        let param_eval = Evaluator::without_files(param_value, Scope::Closed(&self.scope));
-        map.insert(&self.param_name, param_eval);
-
-        let child_scope = OpenScope{
-                map: map, 
-                parent: Some(Scope::Closed(&self.scope))
-            };
-        let eval = Evaluator::without_files(&self.expr, Scope::Open(&child_scope));
-        eval.eval()
-    }
-}

@@ -23,14 +23,24 @@ pub type EvalResult = Result<Output, EvalError>;
 #[derive(PartialEq)]
 #[derive(Debug)]
 pub struct Evaluator<'scope, 'ast: 'scope> {
-    /// Scope of the evaluation
+    /// Scope of the evaluation. Used for looking up function and variable references.
     pub scope: Scope<'scope, 'ast>,
 
-    pub expr: &'ast Ast,
-    file_path: Option<PathBuf>,
+    /// The directory to which processed files are written.
+    /// If it is `None` then evaluation of paths will return `EvalError::OutputPathNotSpecified`.
     pub out_path: Option<PathBuf>,
+
+    expr: &'ast Ast,
+    file_path: Option<PathBuf>,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
+    /// # Arguments
+    /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
+    /// `scope` - The scope of the evaluation.
+    /// `file_path` - The path to the file for which the AST has been evaluated.
+    pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
+        Evaluator{expr: expr, scope: scope, file_path: Some(file_path), out_path: Some(out_path)}
+    }
 
     /// Creates a new evaluator with no input file or output directory specified.
     ///
@@ -39,14 +49,6 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     /// `scope` - The scope of the evaluation.
     pub fn without_files(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
         Evaluator{expr: expr, scope: scope, file_path: None, out_path: None}
-    }
-
-    /// # Arguments
-    /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
-    /// `scope` - The scope of the evaluation.
-    /// `file_path` - The path to the file for which the AST has been evaluated.
-    pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
-        Evaluator{expr: expr, scope: scope, file_path: Some(file_path), out_path: Some(out_path)}
     }
 
     /// Creates a new `Evaluator` with the same input file, out directory and scope for the given
