@@ -15,8 +15,8 @@ pub fn evaluate_binop<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, bino
 }
 
 fn eval_add<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Int(left + right)),
@@ -36,8 +36,8 @@ fn eval_add<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, ri
 }
 
 fn eval_sub<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Int(left - right)),
@@ -50,8 +50,8 @@ fn eval_sub<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, ri
 }
 
 fn eval_mul<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Int(left * right)),
@@ -64,8 +64,8 @@ fn eval_mul<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, ri
 }
 
 fn eval_div<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Int(left / right)),
@@ -78,8 +78,8 @@ fn eval_div<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, ri
 }
 
 fn eval_mod<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Int(left % right)),
@@ -96,8 +96,8 @@ fn eval_pow<'scope, 'ast: 'scope>(_eval: &Evaluator<'scope, 'ast>, _left: &Ast, 
 }
 
 fn eval_equal<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, left: &Ast, right: &Ast) -> EvalResult {
-    let left = Evaluator::new(left, eval.scope.clone()).eval();
-    let right = Evaluator::new(right, eval.scope.clone()).eval();
+    let left = eval.copy_for_expr(left).eval();
+    let right = eval.copy_for_expr(right).eval();
 
     match (left, right) {
         (Ok(Output::Int(left)), Ok(Output::Int(right))) => Ok(Output::Bool(left == right)),

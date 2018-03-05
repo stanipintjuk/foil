@@ -5,14 +5,9 @@ pub fn evaluate_html<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, tag_n
     let children = children
         .iter()
         .map(|child|{ 
-            Evaluator{
-                expr: &child, 
-                scope: eval.scope.clone(), 
-                file_path: eval.file_path.clone(), 
-                out_path: eval.out_path.clone()
-            }
-            .eval()
-            .and_then(Output::to_string)
+            eval.copy_for_expr(&child)
+                .eval()
+                .and_then(Output::to_string)
         })
     .fold(Ok(String::new()), fold_html);
 
@@ -67,13 +62,7 @@ fn fold_string_result<F>(out_str: StrRes, next_string: StrRes, combinator: F) ->
 }
 
 fn field_to_attribute_string<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, field: &SetField) -> StrRes {
-    let evaluator = 
-        Evaluator{
-            expr: &field.value,
-            scope: eval.scope.clone(),
-            file_path: eval.file_path.clone(),
-            out_path: eval.out_path.clone()
-        };
+    let evaluator = eval.copy_for_expr(&field.value);
     let result = evaluator.eval();
     let result = result.and_then(Output::to_string);
 

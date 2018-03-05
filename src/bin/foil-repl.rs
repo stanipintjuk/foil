@@ -53,7 +53,7 @@ fn eval(text: &str) -> EvalResult {
         match parse_res {
             Ok(ast) => {
                 let scope = OpenScope::new();
-                Evaluator::new(&ast,  Scope::Open(&scope)).eval()
+                Evaluator::without_files(&ast,  Scope::Open(&scope)).eval()
             },
             Err(err) => Err(EvalError::Parser(err)),
         }

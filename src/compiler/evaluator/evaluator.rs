@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use compiler::parser::ast::Ast;
 
 use super::scope::Scope;
-use super::output::{Output};
+use super::output::Output;
 use super::error::EvalError;
 
 use super::evaluators::{
@@ -27,7 +27,7 @@ pub struct Evaluator<'scope, 'ast: 'scope> {
     pub scope: Scope<'scope, 'ast>,
 
     pub expr: &'ast Ast,
-    pub file_path: Option<PathBuf>,
+    file_path: Option<PathBuf>,
     pub out_path: Option<PathBuf>,
 }
 impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
@@ -37,7 +37,7 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     /// # Arguments
     /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
     /// `scope` - The scope of the evaluation.
-    pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
+    pub fn without_files(expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Self {
         Evaluator{expr: expr, scope: scope, file_path: None, out_path: None}
     }
 
@@ -45,8 +45,36 @@ impl<'scope, 'ast: 'scope> Evaluator<'scope, 'ast> {
     /// `expr` - The AST (Abstract Syntax Tree) to be evaluated.
     /// `scope` - The scope of the evaluation.
     /// `file_path` - The path to the file for which the AST has been evaluated.
-    pub fn with_file(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
+    pub fn new(expr: &'ast Ast, scope: Scope<'scope, 'ast>, file_path: PathBuf, out_path: PathBuf) -> Self {
         Evaluator{expr: expr, scope: scope, file_path: Some(file_path), out_path: Some(out_path)}
+    }
+
+    /// Creates a new `Evaluator` with the same input file, out directory and scope for the given
+    /// expression.
+    pub fn copy_for_expr(&self, expr: &'ast Ast) -> Evaluator<'scope, 'ast> {
+        Evaluator {
+            scope: self.scope.clone(),
+            expr: expr,
+            file_path: self.file_path.clone(),
+            out_path: self.out_path.clone()
+        }
+    }
+
+    /// Create a new `Evaluator` with the same input and out directory but with a new scope.
+    pub fn copy_for_child_expr(&self, expr: &'ast Ast, scope: Scope<'scope, 'ast>) -> Evaluator<'scope, 'ast> {
+        Evaluator {
+            scope: scope,
+            expr: expr,
+            file_path: self.file_path.clone(),
+            out_path: self.out_path.clone(),
+        }
+    }
+
+    pub fn get_working_dir(&self) -> Option<&Path> {
+        self.file_path
+            .as_ref()
+            .map(PathBuf::as_path)
+            .and_then(Path::parent)
     }
 
     /// Evaluates the expression

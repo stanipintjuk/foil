@@ -12,6 +12,6 @@ fn trivial_test() {
     let ast = parser.next().unwrap().unwrap();
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&ast,  Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&ast,  Scope::Open(&scope)).eval();
     assert_eq!(Ok(expected), actual);
 }

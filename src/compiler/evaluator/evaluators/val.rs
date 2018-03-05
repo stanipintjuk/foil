@@ -5,11 +5,8 @@ use super::evaluate_path;
 
 pub fn evaluate_val<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, val: &Val) -> EvalResult {
     let fall_back_dir = PathBuf::from("./");
-    let working_dir: &Path = eval.file_path
-        .as_ref()
-        .map(PathBuf::as_path)
-        .and_then(Path::parent)
-        .unwrap_or(&fall_back_dir);
+    let working_dir: &Path = 
+        eval.get_working_dir().unwrap_or(&fall_back_dir);
 
     let out_path: &Option<&Path> = &eval.out_path
         .as_ref()

@@ -23,7 +23,7 @@ fn test_execute_binary_op() {
     let expected = Ok(Output::Int(7));
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -40,7 +40,7 @@ fn test_execute_recursive() {
                 Box::new(Ast::Val(Val::Int(3))));
     let expected = Ok(Output::Int(2));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -61,7 +61,7 @@ fn test_execute_let_statement() {
 
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -91,7 +91,7 @@ fn test_nested_let() {
 
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -122,7 +122,7 @@ fn test_shadowing_works() {
 
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -141,7 +141,7 @@ fn test_function_call() {
 
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&fncall, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&fncall, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -174,7 +174,7 @@ fn closure_works() {
 
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&outer_let, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&outer_let, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -207,7 +207,7 @@ fn shadowing_in_closure_works() {
 
     let expected = Ok(Output::Int(6));
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&outer_let, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&outer_let, Scope::Open(&scope)).eval();
     assert_eq!(expected, actual);
 }
 
@@ -231,7 +231,7 @@ fn import_works() {
     let input = Ast::Import(0, import_file.to_str().unwrap().to_string());
     let expected = Ok(Output::Int(3));
     let scope = OpenScope::new();
-    let actual = Evaluator::with_file(&input, Scope::Open(&scope), import_file.to_path_buf(), out_file.to_path_buf()).eval();
+    let actual = Evaluator::new(&input, Scope::Open(&scope), import_file.to_path_buf(), out_file.to_path_buf()).eval();
     assert_eq!(expected, actual);
 }
 
@@ -257,7 +257,7 @@ fn import_should_return_NotFile_error_for_non_existing_paths() {
     
     // Prepare actual result
     let scope = OpenScope::new();
-    let actual = Evaluator::with_file(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
+    let actual = Evaluator::new(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
 
     assert_eq!(expected, actual);
 }
@@ -284,7 +284,7 @@ fn should_return_NotFile_error_for_non_existing_Path_expression() {
     
     // Prepare actual output
     let scope = OpenScope::new();
-    let actual = Evaluator::with_file(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
+    let actual = Evaluator::new(&import_expr, Scope::Open(&scope), tmp_working_dir.join("file.foil"), tmp_out_dir).eval();
 
     assert_eq!(expected, actual);
 }
@@ -300,7 +300,7 @@ fn should_evaluate_html_tag_correctly() {
     let expected = Ok(Output::String("<html></html>".to_string()));
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input,  Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input,  Scope::Open(&scope)).eval();
 
     assert_eq!(expected, actual);
 }
@@ -329,7 +329,7 @@ fn should_evaluate_html_attributes_correctly() {
     let expected = Ok(Output::String("<div class=\"test\" id=\"1\"></div>".to_string()));
 
     let scope =  OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
 
     assert_eq!(expected, actual);
 }
@@ -356,7 +356,7 @@ fn should_evaluate_html_children_correctly() {
     let expected = Ok(Output::String("<div><p></p>test</div>".to_string()));
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
 
     assert_eq!(expected, actual);
 }
@@ -374,7 +374,7 @@ fn should_evaluate_selfclosing_tag_correctly() {
     let expected = Ok(Output::String("<br/>".to_string()));
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
 
     assert_eq!(expected, actual);
 }
@@ -401,7 +401,7 @@ fn should_evaluate_attributes_for_selfclosing_tags_correctly() {
     let expected = Ok(Output::String("<link rel=\"stylesheet\" type=\"text/css\"/>".to_string()));
 
     let scope = OpenScope::new();
-    let actual = Evaluator::new(&input, Scope::Open(&scope)).eval();
+    let actual = Evaluator::without_files(&input, Scope::Open(&scope)).eval();
     
     assert_eq!(expected, actual);
 }

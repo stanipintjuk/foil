@@ -62,19 +62,20 @@ impl Closure {
         Closure{
             param_name: param_name,
             scope: scope, 
-            expr: expr}
+            expr: expr
+        }
     }
 
     pub fn eval(&self, param_value: &Ast) -> EvalResult {
         let mut map: HashMap<&str, _> = HashMap::new();
-        let param_eval = Evaluator::new(param_value, Scope::Closed(&self.scope));
+        let param_eval = Evaluator::without_files(param_value, Scope::Closed(&self.scope));
         map.insert(&self.param_name, param_eval);
 
         let child_scope = OpenScope{
                 map: map, 
                 parent: Some(Scope::Closed(&self.scope))
             };
-        let eval = Evaluator::new(&self.expr, Scope::Open(&child_scope));
+        let eval = Evaluator::without_files(&self.expr, Scope::Open(&child_scope));
         eval.eval()
     }
 }

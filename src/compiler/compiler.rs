@@ -13,7 +13,7 @@ pub fn evaluate_string(text: &str, file_path: &Path, out_dir: &Path) -> EvalResu
         match parse_res {
             Ok(ast) => {
                 let scope = OpenScope::new();
-                Evaluator::with_file(&ast, Scope::Open(&scope), file_path.to_owned(), out_dir.to_owned()).eval()
+                Evaluator::new(&ast, Scope::Open(&scope), file_path.to_owned(), out_dir.to_owned()).eval()
             },
             Err(err) => Err(EvalError::Parser(err)),
         }
