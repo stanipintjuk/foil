@@ -1,5 +1,5 @@
-use compiler::evaluator::error::EvalError;
-use compiler::evaluator::{EvalResult, Output};
+// TODO: Maybe this file should be moved to another module?
+use compiler::evaluator::{EvalError, EvalResult, Output};
 use compiler::{evaluate_file, write_to_file, copy_file};
 use std::path::{Path, PathBuf};
 use std::ffi::OsStr;
@@ -16,7 +16,7 @@ use std::ffi::OsStr;
 /// `EvalError::OutputPathNotSpecified` if `out_path` is None.
 /// error variant would be returned.
 /// 
-pub fn process_path(file: &str, src_path: &Path, out_path: &Option<&Path>) -> EvalResult {
+pub fn evaluate_path(file: &str, src_path: &Path, out_path: &Option<&Path>) -> EvalResult {
     if out_path == &None {
         return Err(EvalError::OutputPathNotSpecified)
     }

@@ -13,7 +13,7 @@ pub enum Output {
     Double(f64),
     Bool(bool),
     String(String),
-    Fn(Function),
+    Fn(Closure),
 }
 
 impl Output {
@@ -51,15 +51,15 @@ impl Display for Output {
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct Function {
+pub struct Closure {
     param_name: String,
     expr: Ast,
     scope: ClosedScope,
 }
 
-impl Function {
+impl Closure {
     pub fn new(param_name: String, expr: Ast, scope: ClosedScope) -> Self {
-        Function{
+        Closure{
             param_name: param_name,
             scope: scope, 
             expr: expr}
