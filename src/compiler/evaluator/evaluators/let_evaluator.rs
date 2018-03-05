@@ -1,7 +1,5 @@
 use compiler::parser::ast::{Ast, SetField};
-use compiler::tokenizer::tokens::{BinOp};
-use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output, Scope, OpenScope};
-use super::evaluate_path;
+use compiler::evaluator::{Evaluator, EvalResult, Scope, OpenScope};
 use std::collections::HashMap;
 
 pub fn evaluate_let<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, field: &SetField, child_expr: &Ast) -> EvalResult {

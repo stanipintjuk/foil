@@ -1,6 +1,5 @@
-use compiler::parser::ast::{Ast, SetField};
-use compiler::tokenizer::tokens::{Val};
-use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
+use compiler::tokenizer::tokens::Val;
+use compiler::evaluator::{Evaluator, EvalResult, Output};
 use std::path::{Path, PathBuf};
 use super::evaluate_path;
 

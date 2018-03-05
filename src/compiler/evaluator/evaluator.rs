@@ -1,18 +1,12 @@
-use std::path::{PathBuf, Path};
-use std::collections::{HashMap};
+use std::path::PathBuf;
+use compiler::parser::ast::Ast;
 
-use compiler;
-
-use compiler::parser::ast::{Ast, SetField, Id};
-use compiler::tokenizer::tokens::{BinOp, Val};
-
-use super::scope::{Scope, OpenScope};
+use super::scope::Scope;
 use super::output::{Output};
 use super::error::EvalError;
 
 use super::evaluators::{
     evaluate_binop, 
-    evaluate_path, 
     evaluate_html, 
     evaluate_html_closed,
     evaluate_import,

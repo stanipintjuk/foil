@@ -1,5 +1,4 @@
 use compiler::parser::ast::{Ast, SetField};
-use compiler::tokenizer::tokens::{BinOp};
 use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
 
 pub fn evaluate_html<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, tag_name: &str, attributes: &Vec<SetField>, children: &Vec<Ast>) -> EvalResult {

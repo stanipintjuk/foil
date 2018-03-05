@@ -1,7 +1,6 @@
 use helpers::all_ok;
-use compiler::tokenizer::tokens::{Token, BinOp, Val, Keyword};
-use compiler::tokenizer::{TokenIterator, TokenResult};
-use super::ast::{Ast, Id, SetField};
+use compiler::tokenizer::tokens::{Token};
+use super::ast::{Ast, SetField};
 use super::error::ParseError;
 use super::parser::{ParseResult, Parser};
 
@@ -118,7 +117,7 @@ fn parse_html_tag_children(parser: &mut Parser, pos: usize, token: Token) -> Opt
     }
 }
 
-fn parse_html_child(parser: &mut Parser, pos: usize, token: Token) -> Option<Result<Ast, ParseError>> {
+fn parse_html_child(parser: &mut Parser, _pos: usize, token: Token) -> Option<Result<Ast, ParseError>> {
     match token {
         Token::Val(_, val) => all_ok(Ast::Val(val)),
         Token::GroupL(pos) => {

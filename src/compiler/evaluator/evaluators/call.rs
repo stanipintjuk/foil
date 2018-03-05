@@ -1,5 +1,4 @@
-use compiler::parser::ast::{Ast, SetField};
-use compiler::tokenizer::tokens::{BinOp};
+use compiler::parser::ast::Ast;
 use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
 
 /// Evaluates a function call

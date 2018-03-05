@@ -41,64 +41,6 @@ impl<'i> Parser<'i> {
         }
     }
 
-    fn parse_html(&mut self, pos: usize) -> Option<ParseResult> {
-        let (pos, id_name) = expect_id!(self.token_iter, pos);
-        self.parse_html_rest(pos, id_name)
-    }
-
-    fn parse_html_rest(&mut self, pos: usize, tag_name: String) -> Option<ParseResult> {
-        let mut attributes = vec![];
-        let mut children = vec![];
-
-        // Parse attributes sometime in the future
-
-        let token = next_token!(self.token_iter, pos);
-        match token {
-            Token::Semi(_) => {
-                return all_ok(Ast::HtmlClosed{tag_name:tag_name, attributes: attributes});
-            },
-            Token::BlockL(pos) => {
-                match self.parse_html_children(pos) {
-                    Ok(ch) => { children = ch; },
-                    Err(err) => { return Some(Err(err)); }
-                }
-            },
-            token => {
-                let child = self.parse_html_child(token);
-                if let Some(Ok(child)) = child {
-                    children.push(child);
-                } else if let Some(Err(err)) = child {
-                    return Some(Err(err));
-                } else {
-                    return Some(Err(ParseError::UnexpectedEndOfCode(pos)));
-                }
-            }
-        }
-
-        all_ok(Ast::Html{
-            tag_name: tag_name,
-            attributes: attributes,
-            children: children,
-        })
-    }
-
-    fn parse_html_children(&mut self, pos: usize) -> Result<Vec<Ast>, ParseError> {
-        unimplemented!()
-    }
-
-    fn parse_html_child(&mut self, token: Token) -> Option<ParseResult> {
-        match token {
-            Token::GroupL(pos) => {
-                let expr = self.next();
-                expect_group_r!(self.token_iter, pos);
-                expr
-            }
-            Token::Val(_, val) => all_ok(Ast::Val(val)),
-            Token::Id(pos, tag_name) => self.parse_html_rest(pos, tag_name),
-            other => Some(Err(ParseError::Unexpected(other))),
-        }
-    }
-
     fn parse_let(&mut self, pos: usize) -> Option<ParseResult> {
         let (pos, id_name) = expect_id!(self.token_iter, pos);
         let pos = expect_assignment!(self.token_iter, pos);

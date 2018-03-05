@@ -397,6 +397,7 @@ fn parse_html_with_one_child_without_braces_should_work() {
 }
 
 #[test]
+#[allow(non_snake_case)]
 fn should_return_UnexpectedEndOfCode_for_incomplete_binary_operator() {
     let input = vec![
         Token::BinOp(0, BinOp::Add)
@@ -409,6 +410,7 @@ fn should_return_UnexpectedEndOfCode_for_incomplete_binary_operator() {
 }
 
 #[test]
+#[allow(non_snake_case)]
 fn should_return_UnexpectedEndOfCode_for_incomplete_html_statement() {
     let input = vec![
         Token::Keyword(0, Keyword::Html),
@@ -421,6 +423,7 @@ fn should_return_UnexpectedEndOfCode_for_incomplete_html_statement() {
 }
 
 #[test]
+#[allow(non_snake_case)]
 fn should_return_UnexpectedEndOfCode_for_incomplete_html_statement2() {
     let input = vec![
         Token::Keyword(0, Keyword::Html),

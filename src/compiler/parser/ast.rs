@@ -34,7 +34,7 @@ impl Display for Ast {
         match self {
             &Ast::BinOp(ref op, ref l, ref r) => write!(f, "{} {} {}", op, l, r),
             &Ast::Val(ref val) => write!(f, "{}", val),
-            &Ast::Set(ref set) => write!(f, "set.."),
+            &Ast::Set(_) => write!(f, "set.."),
             &Ast::Let(ref field, ref expr) => write!(f, "let {}={} in {}", field.name, field.value, expr),
             &Ast::Fn(ref param, ref expr) => write!(f, "fn {}: {}", param, expr),
             &Ast::Call(ref param, ref expr) => write!(f, "({} {})", param, expr),

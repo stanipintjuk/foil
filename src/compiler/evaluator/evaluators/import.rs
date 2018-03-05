@@ -1,5 +1,5 @@
-use compiler::evaluator::{Evaluator, EvalError, EvalResult, Output};
-use compiler::{evaluate_file, write_to_file, copy_file};
+use compiler::evaluator::{Evaluator, EvalResult};
+use compiler::{evaluate_file};
 use std::path::PathBuf;
 
 pub fn evaluate_import<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, file_name: &str) -> EvalResult {
