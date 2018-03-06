@@ -44,7 +44,7 @@ impl Display for Output {
             &Output::Double(ref x) => write!(f, "{}", x),
             &Output::Bool(ref x) => write!(f, "{}", x),
             &Output::String(ref x) => write!(f, "\"{}\"", x),
-            &Output::Fn(ref func) => write!(f, "fn {}: {}", func.param_name, func.expr),
+            &Output::Fn(ref func) => write!(f, "<function {}: {}>", func.param_name, func.expr),
         }
     }
 }

@@ -5,7 +5,10 @@ use compiler::tokenizer::{TokenIterator, TokenResult};
 
 use super::ast::{Ast, Id, SetField};
 use super::error::ParseError;
-use super::html_parser::parse_html;
+use super::parsers::{
+    parse_html,
+    parse_keyword,
+};
 
 pub type ParseResult = Result<Ast, ParseError>;
 
@@ -30,120 +33,6 @@ impl<'i> Parser<'i> {
                            Box::new(right))))
     }
 
-    fn parse_keyword(&mut self, keyword: Keyword, pos: usize) -> Option<ParseResult> {
-        match keyword {
-            Keyword::Let => self.parse_let(pos),
-            Keyword::Fn => self.parse_fn(pos),
-            Keyword::Import => self.parse_import(pos),
-            Keyword::Set => self.parse_set(pos),
-            Keyword::In => Some(Err(ParseError::UnexpectedKeyword(Keyword::In))),
-            Keyword::Html => parse_html(self, pos),
-        }
-    }
-
-    fn parse_let(&mut self, pos: usize) -> Option<ParseResult> {
-        let (pos, id_name) = expect_id!(self.token_iter, pos);
-        let pos = expect_assignment!(self.token_iter, pos);
-        let value = expect_expression!(self, pos);
-        let pos = expect_keyword!(Keyword::In, self.token_iter, pos);
-        let expr = expect_expression!(self, pos);
-        all_ok(
-            Ast::Let(
-                Box::new(SetField {
-                    name: id_name,
-                    value: value
-                }),
-                Box::new(expr)))
-
-    }
-
-    fn parse_fn(&mut self, pos: usize) -> Option<ParseResult> {
-        let (pos, arg_name) = expect_id!(self.token_iter, pos);
-        let token = next_token!(self.token_iter, pos);
-
-        let pos = match token {
-            Token::Colon(pos) => pos,
-            token => {
-                return Some(Err(ParseError::ExpectedColon(token)));
-            }
-        };
-
-        let expr = expect_expression!(self, pos);
-        
-        all_ok(Ast::Fn(arg_name, Box::new(expr)))
-    }
-
-    fn parse_import(&mut self, pos: usize) -> Option<ParseResult> {
-        let token = next_token!(self.token_iter, pos);
-        match token {
-            Token::Val(pos, Val::String(path)) => {
-                Some(Ok(Ast::Import(pos, path)))
-            },
-            token => {
-                Some(Err(ParseError::ExpectedString(token)))
-            }
-        }
-    }
-
-    fn parse_set(&mut self, pos: usize) -> Option<ParseResult> {
-        // Get the token
-        let token = next_token!(self.token_iter, pos);
-
-        // All sets need to start with '{'
-        // So expect GroupL
-        match token {
-            Token::BlockL(_) => { },
-            token => { 
-                return Some(Err(ParseError::ExpectedGroupL(token)));
-            }
-        };
-
-        let mut set_fields: Vec<SetField> = Vec::new();
-
-        // Now find all the set fields
-        loop {
-            let result = self.parse_set_field(pos);
-            if let Some(Ok(field)) = result {
-                set_fields.push(field);
-
-            } else if let Some(Err(err)) = result {
-                return Some(Err(err));
-
-            } else {
-                break;
-            };
-
-            // Get the token
-            let token = next_token!(self.token_iter, pos);
-
-            // Expect comma between set fields
-            // Or if BlockR is found then stop looking for fields
-            match token {
-                Token::Comma(_) => { },
-                Token::BlockR(_) => { break; },
-                token => { 
-                    return Some(Err(ParseError::ExpectedComma(token)));
-                }
-            };
-            
-        };
-
-        Some(Ok(Ast::Set(set_fields)))
-    }
-
-    fn parse_set_field(&mut self, pos: usize) -> Option<Result<SetField, ParseError>> {
-
-        // Expect an id token
-        let (pos, field_name) = expect_id!(self.token_iter, pos);
-
-        // Expect next token to be '='
-        let pos = expect_assignment!(self.token_iter, pos);
-
-        // And let the value be any kind of expression
-        let value = expect_expression!(self, pos);
-
-        return Some(Ok(SetField { name: field_name, value: value }));
-    }
 
     fn parse_fn_call(&mut self, pos: usize) -> Option<ParseResult> {
         let func = expect_expression!(self, pos);
@@ -158,7 +47,7 @@ impl<'i> Parser<'i> {
         match token {
             Ok(Token::BinOp(pos, op)) => self.parse_bin_op(op, pos),
             Ok(Token::Val(_, val)) => all_ok(Ast::Val(val)),
-            Ok(Token::Keyword(pos, keyword)) => self.parse_keyword(keyword, pos),
+            Ok(Token::Keyword(pos, keyword)) => parse_keyword(self, keyword, pos),
             Ok(Token::Id(pos, name)) => all_ok(Ast::Id(Id(pos, name))),
             Ok(Token::GroupL(pos)) => self.parse_fn_call(pos),
             Ok(t) => Some(Err(ParseError::Unexpected(t))),
