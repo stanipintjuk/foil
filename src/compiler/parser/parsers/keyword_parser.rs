@@ -1,6 +1,4 @@
-use helpers::all_ok;
-use compiler::tokenizer::tokens::{Token, Keyword};
-use compiler::parser::ast::{Ast, SetField};
+use compiler::tokenizer::tokens::Keyword;
 use compiler::parser::{ParseError, ParseResult, Parser};
 use super::{
     parse_let,
