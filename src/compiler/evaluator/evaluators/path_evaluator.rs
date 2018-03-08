@@ -28,13 +28,13 @@ pub fn evaluate_path(file: &str, src_path: &Path, out_path: &Option<&Path>) -> E
 
 fn build_path(file: &str, src_path: &Path, out_path: &Path) -> EvalResult {
     // Allow only relative paths
-    let file_path = Path::new(file);
-    if file_path.is_absolute() {
+    let in_file_path = Path::new(file);
+    if in_file_path.is_absolute() {
         return Err(EvalError::PathNotRelative(file.to_string()));
     }
 
-    let out_file_path = out_path.join(&file_path);
-    let file_path = src_path.join(&file_path);
+    let out_file_path = out_path.join(&in_file_path);
+    let file_path = src_path.join(&in_file_path);
 
     if !file_path.is_file() {
         let full_path = src_path.join(file);
@@ -50,6 +50,13 @@ fn build_path(file: &str, src_path: &Path, out_path: &Path) -> EvalResult {
             .and_then(Output::to_string)
             .and_then(|text| { 
                 write_to_file(&text, &out_file_path) 
+            })
+            .map(|_| { 
+                let out_file_rel_path = in_file_path.with_extension("html")
+                                                    .to_str()
+                                                    .unwrap_or("None")
+                                                    .to_string();
+                Output::String(out_file_rel_path)
             })
     } else {
         copy_file(&file_path, &out_file_path)

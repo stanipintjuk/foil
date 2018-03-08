@@ -8,6 +8,12 @@ use super::tokenizer::Tokenizer;
 use super::parser::Parser;
 use super::models::Output;
 
+/// Evaluates a piece of foil-code.
+///
+/// # Arguments
+/// `text` - the foil code.
+/// `file_path` - the path to the file that contains the given foil code.
+/// `out_dir` - the output directory.
 pub fn evaluate_string(text: &str, file_path: &Path, out_dir: &Path) -> EvalResult {
     let mut tokenizer = Tokenizer::new(&text);
     let mut parser = Parser::new(&mut tokenizer);
