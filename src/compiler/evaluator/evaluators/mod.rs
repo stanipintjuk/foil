@@ -1,20 +1,19 @@
-mod binop;
-pub use self::binop::evaluate_binop;
-mod path;
-pub use self::path::evaluate_path;
-mod html;
-pub use self::html::{evaluate_html, evaluate_html_closed};
-mod import;
-pub use self::import::evaluate_import;
-mod closure;
-pub use self::closure::evaluate_closure;
-mod call;
-pub use self::call::evaluate_call;
-mod val;
-pub use self::val::evaluate_val;
-mod id;
-pub use self::id::evaluate_id;
-
-// let is a keyword in rust so I can't use it as a module name :(
+mod binop_evaluator;
+mod path_evaluator;
+mod html_evaluator;
+mod import_evaluator;
+mod closure_evaluator;
+mod call_evaluator;
+mod val_evaluator;
+mod id_evaluator;
 mod let_evaluator;
+
+pub use self::binop_evaluator::evaluate_binop;
+pub use self::path_evaluator::evaluate_path;
+pub use self::html_evaluator::{evaluate_html, evaluate_html_closed};
+pub use self::import_evaluator::evaluate_import;
+pub use self::closure_evaluator::evaluate_closure;
+pub use self::call_evaluator::evaluate_call;
+pub use self::val_evaluator::evaluate_val;
+pub use self::id_evaluator::evaluate_id;
 pub use self::let_evaluator::evaluate_let;
