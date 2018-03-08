@@ -2,7 +2,7 @@ use std::path::{PathBuf, Path};
 use compiler::models::{Ast, Output};
 
 use super::scope::Scope;
-use super::error::EvalError;
+use compiler::errors::EvalError;
 
 use super::evaluators::{
     evaluate_binop, 

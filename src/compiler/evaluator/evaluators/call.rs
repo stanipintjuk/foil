@@ -1,5 +1,6 @@
 use compiler::models::{Ast, Output};
-use compiler::evaluator::{Evaluator, EvalResult, EvalError};
+use compiler::evaluator::{Evaluator, EvalResult};
+use compiler::errors::EvalError;
 
 /// Evaluates a function call
 /// # Arguments

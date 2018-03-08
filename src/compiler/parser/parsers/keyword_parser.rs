@@ -1,5 +1,6 @@
 use compiler::models::Keyword;
-use compiler::parser::{ParseError, ParseResult, Parser};
+use compiler::parser::{ParseResult, Parser};
+use compiler::errors::ParseError;
 use super::{
     parse_let,
     parse_fn,

@@ -1,5 +1,6 @@
 use compiler::models::{Ast, BinOp};
-use compiler::parser::{ParseResult, Parser, ParseError};
+use compiler::parser::{ParseResult, Parser};
+use compiler::errors::ParseError;
 
 pub fn parse_binop(parser: &mut Parser, op: BinOp, pos: usize) -> Option<ParseResult> {
     // Get the left expression

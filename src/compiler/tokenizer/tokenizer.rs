@@ -7,7 +7,7 @@ use super::regex::{
     match_string,
     match_path
 };
-use super::error::TokenError;
+use compiler::errors::TokenError;
 
 pub type TokenResult = Result<Token, TokenError>;
 pub type TokenIterator<'i> = Iterator<Item=TokenResult> + 'i;

@@ -1,5 +1,6 @@
 // TODO: Maybe this file should be moved to another module?
-use compiler::evaluator::{EvalError, EvalResult};
+use compiler::evaluator::EvalResult;
+use compiler::errors::EvalError;
 use compiler::models::Output;
 use compiler::{evaluate_file, write_to_file, copy_file};
 use std::path::Path;

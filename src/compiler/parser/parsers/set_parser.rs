@@ -1,6 +1,7 @@
 use helpers::all_ok;
 use compiler::models::{Token, Keyword, Ast, SetField};
-use compiler::parser::{ParseError, ParseResult, Parser};
+use compiler::parser::{ParseResult, Parser};
+use compiler::errors::ParseError;
 
 pub fn parse_set(parser: &mut Parser, pos: usize) -> Option<ParseResult> {
     // Get the token

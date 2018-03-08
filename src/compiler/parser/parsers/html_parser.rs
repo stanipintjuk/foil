@@ -1,6 +1,7 @@
 use helpers::all_ok;
 use compiler::models::{Ast, SetField, Token};
-use compiler::parser::{ParseError, ParseResult, Parser};
+use compiler::parser::{ParseResult, Parser};
+use compiler::errors::ParseError;
 
 pub fn parse_html(parser: &mut Parser, pos: usize) -> Option<ParseResult> {
 

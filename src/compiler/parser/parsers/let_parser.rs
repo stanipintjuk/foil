@@ -1,6 +1,7 @@
 use helpers::all_ok;
 use compiler::models::{Ast, SetField, Token, Keyword};
-use compiler::parser::{ParseError, ParseResult, Parser};
+use compiler::parser::{ParseResult, Parser};
+use compiler::errors::ParseError;
 
 
 pub fn parse_let(parser: &mut Parser, pos: usize) -> Option<ParseResult> {

@@ -1,7 +1,8 @@
 extern crate foil;
 use foil::compiler::tokenizer::Tokenizer;
-use foil::compiler::parser::{Parser, ParseError};
-use foil::compiler::evaluator::{Evaluator, Scope, OpenScope, EvalResult, EvalError};
+use foil::compiler::parser::Parser;
+use foil::compiler::evaluator::{Evaluator, Scope, OpenScope, EvalResult};
+use foil::compiler::errors::{EvalError, ParseError};
 
 use std::io::{self, BufRead};
 use std::io::prelude::*;

@@ -4,7 +4,7 @@ use std::fs::{File, create_dir_all};
 
 use super::{Evaluator, OpenScope, Scope};
 use compiler::models::*;
-use super::error::EvalError;
+use compiler::errors::EvalError;
 
 #[test]
 fn test_execute_binary_op() {

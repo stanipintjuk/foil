@@ -2,7 +2,8 @@ use std::io::{Read, Write};
 use std::fs::{self, File};
 use std::path::Path;
 
-use super::evaluator::{Evaluator, EvalError, EvalResult, Scope, OpenScope};
+use super::evaluator::{Evaluator, EvalResult, Scope, OpenScope};
+use compiler::errors::EvalError;
 use super::tokenizer::Tokenizer;
 use super::parser::Parser;
 use super::models::Output;

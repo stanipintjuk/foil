@@ -1,4 +1,4 @@
-use compiler::evaluator::EvalError;
+use compiler::errors::EvalError;
 use super::closure::Closure;
 use std::fmt::{Display, Formatter, self};
 

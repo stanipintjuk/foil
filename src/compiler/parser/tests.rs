@@ -1,5 +1,6 @@
 use compiler::parser::*;
 use compiler::models::*;
+use compiler::errors::ParseError;
 
 #[test]
 fn parse_binary_op_test() {

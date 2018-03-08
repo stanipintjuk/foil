@@ -3,7 +3,7 @@ use helpers::all_ok;
 use compiler::models::{Ast, Id, Token, BinOp, Val, Keyword};
 use compiler::tokenizer::{TokenIterator, TokenResult};
 
-use super::error::ParseError;
+use compiler::errors::ParseError;
 use super::parsers::{
     parse_keyword,
     parse_binop,

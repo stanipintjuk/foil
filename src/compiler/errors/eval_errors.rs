@@ -2,7 +2,7 @@ use std::io::{Error as IOError};
 use std::path::PathBuf;
 
 use compiler::models::{BinOp, Id, Output};
-use compiler::parser::ParseError;
+use compiler::errors::ParseError;
 
 #[derive(Debug)]
 pub enum EvalError {
