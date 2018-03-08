@@ -1,11 +1,8 @@
 use std::io::{Error as IOError};
 use std::path::PathBuf;
 
-use compiler::tokenizer::tokens::{BinOp};
+use compiler::models::{BinOp, Id, Output};
 use compiler::parser::ParseError;
-use compiler::parser::ast::{Id};
-
-use super::output::Output;
 
 #[derive(Debug)]
 pub enum EvalError {

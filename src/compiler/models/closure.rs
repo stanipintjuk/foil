@@ -1,7 +1,6 @@
-use super::scope::{OpenScope, ClosedScope, Scope};
 use std::collections::HashMap;
-use compiler::parser::ast::Ast;
-use super::evaluator::{Evaluator, EvalResult};
+use compiler::models::Ast;
+use compiler::evaluator::{OpenScope, ClosedScope, Scope, Evaluator, EvalResult};
 
 #[derive(PartialEq)]
 #[derive(Debug)]

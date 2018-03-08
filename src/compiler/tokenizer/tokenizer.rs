@@ -1,4 +1,4 @@
-use super::tokens::{Token, BinOp, UnaryOp, Val, Keyword};
+use compiler::models::{Token, BinOp, UnaryOp, Val, Keyword};
 use super::regex::{
     end_of_whitespace,
     match_bare_word,
@@ -12,7 +12,7 @@ use super::error::TokenError;
 pub type TokenResult = Result<Token, TokenError>;
 pub type TokenIterator<'i> = Iterator<Item=TokenResult> + 'i;
 
-// Convinient way to return a token and move the lexer position forwards.
+// Convinient way to return a token and move the lexer position forward.
 // Example:
 // token!(Token::BinOp => BinOp::Add, lexer=>1)
 // Means "Create a token of type BinOp and of variant 'Add', and then move the lexer pointer 1 step"
@@ -177,7 +177,7 @@ impl<'a> Iterator for Tokenizer<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::tokens::*;
+    use compiler::models::tokens::*;
 
     #[test]
     fn test_tokenizer_native_ops_work() {

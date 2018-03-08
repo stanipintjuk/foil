@@ -1,8 +1,7 @@
 use std::path::{PathBuf, Path};
-use compiler::parser::ast::Ast;
+use compiler::models::{Ast, Output};
 
 use super::scope::Scope;
-use super::output::Output;
 use super::error::EvalError;
 
 use super::evaluators::{

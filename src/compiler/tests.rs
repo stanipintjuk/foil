@@ -1,6 +1,7 @@
 use super::tokenizer::Tokenizer;
-use super::evaluator::{Output, Evaluator, Scope, OpenScope};
 use super::parser::Parser;
+use super::evaluator::{Evaluator, Scope, OpenScope};
+use super::models::Output;
 
 #[test]
 fn trivial_test() {

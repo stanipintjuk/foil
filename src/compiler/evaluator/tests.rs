@@ -2,13 +2,9 @@ use tempdir::TempDir;
 use std::io::{Write};
 use std::fs::{File, create_dir_all};
 
-use super::evaluator::Evaluator;
-use super::output::Output;
-use super::scope::{OpenScope, Scope};
+use super::{Evaluator, OpenScope, Scope};
+use compiler::models::*;
 use super::error::EvalError;
-
-use compiler::parser::ast::{Ast, SetField, Id};
-use compiler::tokenizer::tokens::{Val, BinOp};
 
 #[test]
 fn test_execute_binary_op() {

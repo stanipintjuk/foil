@@ -1,4 +1,4 @@
-use compiler::parser::ast::{Ast, SetField};
+use compiler::models::{Ast, SetField};
 use compiler::evaluator::{Evaluator, EvalResult, Scope, OpenScope};
 use std::collections::HashMap;
 

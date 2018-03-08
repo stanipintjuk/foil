@@ -1,7 +1,8 @@
 // TODO: Maybe this file should be moved to another module?
-use compiler::evaluator::{EvalError, EvalResult, Output};
+use compiler::evaluator::{EvalError, EvalResult};
+use compiler::models::Output;
 use compiler::{evaluate_file, write_to_file, copy_file};
-use std::path::{Path};
+use std::path::Path;
 use std::ffi::OsStr;
 
 /// # Arguments

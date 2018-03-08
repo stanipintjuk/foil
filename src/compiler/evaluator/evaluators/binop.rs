@@ -1,6 +1,5 @@
-use compiler::parser::ast::{Ast};
-use compiler::tokenizer::tokens::{BinOp};
-use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
+use compiler::models::{Ast, BinOp, Output};
+use compiler::evaluator::{Evaluator, EvalResult, EvalError};
 
 pub fn evaluate_binop<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, binop: &'ast BinOp, left: &'ast Ast, right: &'ast Ast) -> EvalResult {
     match binop {

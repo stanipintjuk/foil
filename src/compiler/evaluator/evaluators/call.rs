@@ -1,5 +1,5 @@
-use compiler::parser::ast::Ast;
-use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
+use compiler::models::{Ast, Output};
+use compiler::evaluator::{Evaluator, EvalResult, EvalError};
 
 /// Evaluates a function call
 /// # Arguments

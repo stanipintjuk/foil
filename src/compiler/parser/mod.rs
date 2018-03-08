@@ -2,8 +2,6 @@
 mod parser;
 pub use self::parser::{Parser, ParseResult};
 
-pub mod ast;
-
 mod error;
 pub use self::error::{ParseError};
 

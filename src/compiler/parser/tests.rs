@@ -1,6 +1,5 @@
 use compiler::parser::*;
-use compiler::parser::ast::*;
-use compiler::tokenizer::tokens::*;
+use compiler::models::*;
 
 #[test]
 fn parse_binary_op_test() {

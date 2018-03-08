@@ -1,6 +1,5 @@
+use compiler::models::{Ast, Token};
 use compiler::parser::{ParseResult, Parser, ParseError};
-use compiler::parser::ast::Ast;
-use compiler::tokenizer::tokens::Token;
 
 pub fn parse_call(parser: &mut Parser, pos: usize) -> Option<ParseResult> {
     let func = expect_expression!(parser, pos);

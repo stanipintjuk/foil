@@ -1,9 +1,8 @@
 use helpers::all_ok;
 
-use compiler::tokenizer::tokens::{Token, BinOp, Val, Keyword};
+use compiler::models::{Ast, Id, Token, BinOp, Val, Keyword};
 use compiler::tokenizer::{TokenIterator, TokenResult};
 
-use super::ast::{Ast, Id};
 use super::error::ParseError;
 use super::parsers::{
     parse_keyword,

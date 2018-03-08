@@ -2,9 +2,10 @@ use std::io::{Read, Write};
 use std::fs::{self, File};
 use std::path::Path;
 
-use super::evaluator::{Evaluator, Output, EvalError, EvalResult, Scope, OpenScope};
+use super::evaluator::{Evaluator, EvalError, EvalResult, Scope, OpenScope};
 use super::tokenizer::Tokenizer;
 use super::parser::Parser;
+use super::models::Output;
 
 pub fn evaluate_string(text: &str, file_path: &Path, out_dir: &Path) -> EvalResult {
     let mut tokenizer = Tokenizer::new(&text);

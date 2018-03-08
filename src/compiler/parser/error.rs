@@ -1,5 +1,5 @@
-use compiler::tokenizer::tokens::{Token, Keyword};
-use compiler::tokenizer::{TokenError};
+use compiler::models::{Token, Keyword};
+use compiler::tokenizer::TokenError;
 
 #[derive(PartialEq)]
 #[derive(Debug)]

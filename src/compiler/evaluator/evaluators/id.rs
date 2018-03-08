@@ -1,4 +1,4 @@
-use compiler::parser::ast::{Id};
+use compiler::models::Id;
 use compiler::evaluator::{Evaluator, EvalResult, EvalError};
 
 /// Evaluates an "Id" (a function or  a variable reference) by doing a lookup in the scope

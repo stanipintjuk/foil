@@ -1,5 +1,5 @@
-use compiler::parser::ast::{Ast, SetField};
-use compiler::evaluator::{Evaluator, EvalResult, EvalError, Output};
+use compiler::models::{Ast, SetField, Output};
+use compiler::evaluator::{Evaluator, EvalResult, EvalError};
 
 pub fn evaluate_html<'scope, 'ast: 'scope>(eval: &Evaluator<'scope, 'ast>, tag_name: &str, attributes: &Vec<SetField>, children: &Vec<Ast>) -> EvalResult {
     let children = children

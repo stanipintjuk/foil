@@ -1,4 +1,4 @@
-use compiler::tokenizer::tokens::{BinOp, Val};
+use compiler::models::{BinOp, Val};
 use std::fmt::{Display, Formatter, self};
 
 /// AST - Abstract Syntax Tree

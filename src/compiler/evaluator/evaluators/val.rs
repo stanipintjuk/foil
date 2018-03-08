@@ -1,5 +1,5 @@
-use compiler::tokenizer::tokens::Val;
-use compiler::evaluator::{Evaluator, EvalResult, Output};
+use compiler::models::{Val, Output};
+use compiler::evaluator::{Evaluator, EvalResult};
 use std::path::{Path, PathBuf};
 use super::evaluate_path;
 

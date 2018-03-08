@@ -1,6 +1,5 @@
-use compiler::tokenizer::tokens::BinOp;
+use compiler::models::{Ast, BinOp};
 use compiler::parser::{ParseResult, Parser, ParseError};
-use compiler::parser::ast::Ast;
 
 pub fn parse_binop(parser: &mut Parser, op: BinOp, pos: usize) -> Option<ParseResult> {
     // Get the left expression

@@ -1,4 +1,4 @@
-use compiler::tokenizer::tokens::Keyword;
+use compiler::models::Keyword;
 use compiler::parser::{ParseError, ParseResult, Parser};
 use super::{
     parse_let,
